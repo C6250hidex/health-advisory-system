@@ -29,6 +29,7 @@ const AdminDashboard = () => {
     patients: [],
     logs: [],
   });
+  const [myPosts, setMyPosts] = useState([]); // State for blog management
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("appointments");
   const [searchTerm, setSearchTerm] = useState("");
@@ -44,8 +45,12 @@ const AdminDashboard = () => {
   const fetchAdminData = useCallback(async () => {
     setLoading(true);
     try {
-      const userRes = await api.get("/auth/users");
-      const appRes = await api.get("/appointments/admin");
+      // Fetching all required admin data in parallel for performance
+      const [userRes, appRes, postsRes] = await Promise.all([
+        api.get("/auth/users"),
+        api.get("/appointments/admin"),
+        api.get("/posts/my-posts"), // Fetching the admin's posts
+      ]);
 
       let logsRes = { data: [] };
       try {
@@ -63,8 +68,11 @@ const AdminDashboard = () => {
         patients: userRes.data.filter((u) => u.role === "user"),
         logs: logsRes.data,
       });
+
+      setMyPosts(postsRes.data); // Setting the posts state
     } catch (err) {
       console.error("Admin Dashboard Fetch Error:", err.message);
+      toast.error("Failed to sync system data.");
     } finally {
       setLoading(false);
     }
@@ -73,6 +81,45 @@ const AdminDashboard = () => {
   useEffect(() => {
     fetchAdminData();
   }, [fetchAdminData]);
+
+  // --- ACTION FUNCTIONS ---
+
+  const handleVerifyDoctor = async (userId) => {
+    try {
+      await api.put(`/auth/verify-doctor/${userId}`);
+      toast.success("Doctor Approved Successfully!");
+      fetchAdminData();
+    } catch (err) {
+      console.error("Verification error:", err);
+      toast.error("Error verifying doctor");
+    }
+  };
+
+  const handleDeleteUser = async (userId) => {
+    if (window.confirm("Permanent Action: Delete this user from the system?")) {
+      try {
+        await api.delete(`/auth/users/${userId}`);
+        toast.success("User removed.");
+        fetchAdminData();
+      } catch (err) {
+        console.error("Delete Error:", err);
+        toast.error("Error deleting user");
+      }
+    }
+  };
+
+  const handleDeletePost = async (id) => {
+    if (window.confirm("Delete this article?")) {
+      try {
+        await api.delete(`/posts/${id}`);
+        setMyPosts(myPosts.filter((p) => p.id !== id));
+        toast.success("Article deleted.");
+      } catch (err) {
+        console.error(err);
+        toast.error("Failed to delete post");
+      }
+    }
+  };
 
   // --- MODAL TRIGGER FUNCTIONS ---
 
@@ -97,32 +144,6 @@ const AdminDashboard = () => {
     } catch (err) {
       console.error("Audit Error:", err);
       toast.error("Failed to fetch conversation history.");
-    }
-  };
-
-  // --- ACTION FUNCTIONS ---
-
-  const handleVerifyDoctor = async (userId) => {
-    try {
-      await api.put(`/auth/verify-doctor/${userId}`);
-      toast.success("Doctor Approved Successfully!");
-      fetchAdminData();
-    } catch (err) {
-      console.error("Verification error:", err);
-      toast.error("Error verifying doctor");
-    }
-  };
-
-  const handleDeleteUser = async (userId) => {
-    if (window.confirm("Permanent Action: Delete this user from the system?")) {
-      try {
-        await api.delete(`/auth/users/${userId}`);
-        toast.success("User removed.");
-        fetchAdminData();
-      } catch (err) {
-        console.error("Delete Error:", err.message);
-        toast.error("Error deleting user");
-      }
     }
   };
 
@@ -276,7 +297,7 @@ const AdminDashboard = () => {
                                 <div className="font-bold text-slate-800">
                                   {app.patient_name}
                                 </div>
-                                <div className="text-xs text-blue-600 font-black uppercase tracking-tighter">
+                                <div className="text-xs text-blue-600 font-black tracking-tighter">
                                   Dr. {app.doctor_name}
                                 </div>
                               </td>
@@ -352,7 +373,7 @@ const AdminDashboard = () => {
                             <div className="flex gap-2">
                               <button
                                 onClick={() => handleVerifyDoctor(doc.id)}
-                                className="bg-emerald-500 text-white p-3 rounded-xl hover:bg-emerald-600 shadow-lg shadow-emerald-100"
+                                className="bg-emerald-500 text-white p-3 rounded-xl hover:bg-emerald-600 shadow-lg"
                               >
                                 <CheckCircle size={20} />
                               </button>
@@ -403,7 +424,7 @@ const AdminDashboard = () => {
                             </button>
                             <button
                               onClick={() => handleDeleteUser(u.id)}
-                              className="text-red-400 hover:text-red-600 p-2 rounded-xl hover:bg-red-50 transition-colors"
+                              className="text-red-400 hover:text-red-600 p-2 rounded-xl transition-colors"
                             >
                               <Trash2 size={20} />
                             </button>
@@ -438,9 +459,71 @@ const AdminDashboard = () => {
                 </>
               )}
             </div>
+
+            {/* --- NEW SECTION: BLOG MANAGEMENT (integrated below appointment list) --- */}
+            <div className="mt-12 bg-white p-8 rounded-[40px] shadow-xl border border-slate-100 animate-in fade-in slide-in-from-bottom-4 duration-700">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-black flex items-center gap-2 text-slate-800">
+                  <PenTool size={20} className="text-blue-600" /> Published
+                  Articles
+                </h3>
+                <Link
+                  to="/create-post"
+                  className="text-xs font-black text-blue-600 uppercase tracking-widest bg-blue-50 px-4 py-2 rounded-xl hover:bg-blue-600 hover:text-white transition-all"
+                >
+                  New Post +
+                </Link>
+              </div>
+              <div className="grid gap-4">
+                {myPosts.length === 0 ? (
+                  <p className="text-center py-6 text-slate-400 italic text-sm">
+                    You haven't published any articles yet.
+                  </p>
+                ) : (
+                  myPosts.map((post) => (
+                    <div
+                      key={post.id}
+                      className="flex items-center justify-between p-5 bg-slate-50/50 rounded-3xl border border-slate-100 hover:border-blue-100 transition-all"
+                    >
+                      <div>
+                        <h4 className="font-bold text-slate-800 leading-tight">
+                          {post.title}
+                        </h4>
+                        <div className="flex items-center gap-3 mt-1">
+                          <p className="text-[9px] text-blue-600 font-black uppercase tracking-tighter bg-blue-50 px-2 py-0.5 rounded-md">
+                            {post.category}
+                          </p>
+                          <p className="text-[9px] text-slate-400 font-bold uppercase">
+                            {new Date(post.created_at).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() =>
+                            toast(
+                              "Feature coming soon: Use the Blog page to view full content.",
+                            )
+                          }
+                          className="p-2.5 bg-white text-slate-400 hover:text-blue-600 rounded-xl border border-slate-100 shadow-sm"
+                        >
+                          <Settings size={18} />
+                        </button>
+                        <button
+                          onClick={() => handleDeletePost(post.id)}
+                          className="p-2.5 bg-white text-slate-400 hover:text-red-600 rounded-xl border border-slate-100 shadow-sm"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
           </div>
 
-          {/* RIGHT: SYSTEM TOOLS */}
+          {/* RIGHT SIDEBAR */}
           <div className="lg:col-span-1 space-y-6">
             <div className="bg-white p-8 rounded-[35px] shadow-xl shadow-slate-200/50 border border-slate-100">
               <h3 className="text-lg font-black text-slate-900 mb-6 flex items-center gap-2">
@@ -463,14 +546,14 @@ const AdminDashboard = () => {
                 </Link>
                 <Link
                   to="/create-post"
-                  className="group p-5 bg-indigo-50 rounded-3xl border border-indigo-100 flex items-center justify-between hover:bg-indigo-600 transition-all duration-300"
+                  className="group p-5 bg-indigo-50 rounded-3xl border border-indigo-100 flex items-center justify-between hover:bg-indigo-600 transition-all"
                 >
                   <div>
                     <h4 className="font-bold text-indigo-900 group-hover:text-white">
                       Health Journal
                     </h4>
                     <p className="text-xs text-indigo-600 group-hover:text-indigo-100">
-                      Publish latest health news
+                      Publish news
                     </p>
                   </div>
                   <PenTool className="text-indigo-600 group-hover:text-white" />
@@ -499,7 +582,7 @@ const AdminDashboard = () => {
               />
               <h4 className="text-lg font-bold mb-2">Infrastructure</h4>
               <p className="text-indigo-100 text-xs mb-6">
-                Monitoring global server metrics.
+                Live server metrics.
               </p>
               <div className="space-y-4">
                 <LiveBar label="DB Latency" percent="99.9%" />
@@ -510,7 +593,7 @@ const AdminDashboard = () => {
         </div>
       </div>
 
-      {/* --- PROFESSIONAL MODAL SYSTEM --- */}
+      {/* --- MODALS --- */}
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
@@ -559,12 +642,9 @@ const AdminDashboard = () => {
         {modalContent.type === "chat" && (
           <div className="space-y-4">
             {modalContent.data.length === 0 ? (
-              <div className="text-center py-10">
-                <Activity size={40} className="mx-auto text-slate-200 mb-2" />
-                <p className="text-slate-400 font-bold">
-                  No messages exchanged yet.
-                </p>
-              </div>
+              <p className="text-center py-10 text-gray-400 font-bold uppercase text-xs">
+                No activity yet.
+              </p>
             ) : (
               modalContent.data.map((m, i) => (
                 <div
@@ -582,7 +662,7 @@ const AdminDashboard = () => {
                       })}
                     </span>
                   </p>
-                  <p className="text-sm font-medium text-slate-800 leading-relaxed">
+                  <p className="text-sm font-medium text-slate-800">
                     {m.message_text}
                   </p>
                 </div>
@@ -595,7 +675,7 @@ const AdminDashboard = () => {
   );
 };
 
-// Internal Sub-components
+// Sub-components
 const AdminStatCard = ({ title, count, icon, color }) => (
   <div className="bg-white p-6 rounded-[30px] shadow-sm border border-slate-100 flex items-center gap-5">
     <div className={`${color} p-4 rounded-2xl text-white shadow-lg`}>

@@ -22,6 +22,7 @@ import {
   Save,
   MapPin,
   Briefcase,
+  Trash2, // Added for the delete button
 } from "lucide-react";
 import AppointmentChat from "../components/AppointmentChat";
 import Modal from "../components/Modal";
@@ -45,6 +46,7 @@ const getRealTimeLocation = () => {
 
 const DoctorDashboard = () => {
   const [apps, setApps] = useState([]);
+  const [myPosts, setMyPosts] = useState([]); // State for blog management
   const [loading, setLoading] = useState(false);
   const [isActive, setIsActive] = useState(true);
   const [statusLoading, setStatusLoading] = useState(false);
@@ -58,7 +60,7 @@ const DoctorDashboard = () => {
   const [selectedApp, setSelectedApp] = useState(null);
   const [instructions, setInstructions] = useState("");
 
-  // 1. Updated Initial State to include experience_years
+  // Doctor Professional Data State
   const [doctorData, setDoctorData] = useState({
     phone: "",
     dob: "",
@@ -82,16 +84,18 @@ const DoctorDashboard = () => {
     return age;
   };
 
-  // 2. Integrated fetchDashboardData (High Performance Sync)
+  // 1. Consolidated High Performance Sync (Fetches Apps, Profile, and Posts)
   const fetchDashboardData = useCallback(async () => {
     setLoading(true);
     try {
-      const [appRes, profRes] = await Promise.all([
+      const [appRes, profRes, postRes] = await Promise.all([
         api.get("/appointments/doctor"),
         api.get("/auth/profile"),
+        api.get("/posts/my-posts"), // Fetching doctor's specific posts
       ]);
 
       setApps(appRes.data);
+      setMyPosts(postRes.data);
       setDoctorData({
         phone: profRes.data.phone || "",
         dob: profRes.data.dob || "",
@@ -102,6 +106,7 @@ const DoctorDashboard = () => {
       });
     } catch (err) {
       console.error("Dashboard Fetch Error:", err.message);
+      toast.error("Failed to sync dashboard data.");
     } finally {
       setLoading(false);
     }
@@ -114,7 +119,6 @@ const DoctorDashboard = () => {
   const updateDoctorProfile = async (e) => {
     e.preventDefault();
     setStatusLoading(true);
-
     let coordinates = { lat: null, lng: null };
 
     try {
@@ -122,27 +126,36 @@ const DoctorDashboard = () => {
         const loc = await getRealTimeLocation();
         coordinates = loc;
       } catch (locErr) {
-        console.warn(
-          "Location skipped. Saving profile without GPS.",
-          locErr.message,
-        );
+        console.warn("Location skipped. Saving profile without GPS.");
       }
 
-      // Send all data including experience_years
       await api.put("/auth/profile", {
         ...doctorData,
         latitude: coordinates.lat,
         longitude: coordinates.lng,
       });
 
-      toast.success("Professional Profile Updated Successfully!");
+      toast.success("Professional Profile Updated!");
       setIsSettingsModalOpen(false);
       fetchDashboardData();
     } catch (err) {
       console.error("Profile Update Error:", err);
-      toast.error("Failed to update profile. Please try again.");
+      toast.error("Failed to update profile.");
     } finally {
       setStatusLoading(false);
+    }
+  };
+
+  const handleDeletePost = async (id) => {
+    if (window.confirm("Delete this article?")) {
+      try {
+        await api.delete(`/posts/${id}`);
+        setMyPosts(myPosts.filter((p) => p.id !== id));
+        toast.success("Article deleted.");
+      } catch (err) {
+        console.error(err);
+        toast.error("Failed to delete post");
+      }
     }
   };
 
@@ -165,6 +178,7 @@ const DoctorDashboard = () => {
       setIsInstructionModalOpen(false);
       setInstructions("");
       fetchDashboardData();
+      toast.success("Appointment Approved");
     } catch (err) {
       console.error("Approval Error:", err);
       toast.error("Failed to approve appointment.");
@@ -176,6 +190,7 @@ const DoctorDashboard = () => {
       try {
         await api.put(`/appointments/${id}/status`, { status: "rejected" });
         fetchDashboardData();
+        toast.success("Appointment Rejected");
       } catch (err) {
         console.error(err);
         toast.error("Failed to update status");
@@ -189,6 +204,7 @@ const DoctorDashboard = () => {
     try {
       await api.patch("/appointments/status-toggle", { is_active: newStatus });
       setIsActive(newStatus);
+      toast.success(`You are now ${newStatus ? "Online" : "Offline"}`);
     } catch (err) {
       console.error("Toggle Status Error:", err.message);
       toast.error("Could not update availability.");
@@ -214,11 +230,11 @@ const DoctorDashboard = () => {
               <div className="absolute -bottom-1 -right-1 bg-emerald-500 border-2 border-white w-4 h-4 rounded-full"></div>
             </button>
             <div>
-              <h1 className="text-3xl font-black text-gray-900 tracking-tight leading-none">
+              <h1 className="text-3xl font-black text-gray-900 tracking-tight">
                 Doctor's Portal
               </h1>
-              <p className="text-gray-500 font-medium italic mt-2">
-                Active Practitioner: {user?.name}
+              <p className="text-gray-500 font-medium italic uppercase text-[10px] tracking-widest mt-1">
+                Verified Practitioner: {user?.name}
               </p>
             </div>
           </div>
@@ -290,7 +306,7 @@ const DoctorDashboard = () => {
             </h2>
             <button
               onClick={fetchDashboardData}
-              className="text-xs font-black text-blue-600 uppercase"
+              className="text-xs font-black text-blue-600 uppercase tracking-tighter hover:underline"
             >
               Refresh Sync
             </button>
@@ -299,10 +315,10 @@ const DoctorDashboard = () => {
           <div className="p-4 md:p-8 space-y-4">
             {loading ? (
               <div className="text-center py-20 text-gray-400 font-bold animate-pulse">
-                Syncing Encrypted Records...
+                Syncing Encrypted Data...
               </div>
             ) : apps.length === 0 ? (
-              <div className="text-center py-20 text-gray-300 font-bold uppercase text-xs">
+              <div className="text-center py-20 text-slate-300 font-bold uppercase text-xs">
                 No active consultations
               </div>
             ) : (
@@ -396,7 +412,50 @@ const DoctorDashboard = () => {
           </div>
         </div>
 
-        {/* 4. TOOLS */}
+        {/* --- NEW SECTION: MY PUBLISHED ARTICLES --- */}
+        <div className="mt-12 bg-white p-8 rounded-[40px] shadow-xl border border-slate-100 animate-in fade-in duration-500">
+          <h3 className="text-xl font-black mb-6 flex items-center gap-2 text-slate-800">
+            <PenTool size={20} className="text-blue-600" /> My Published
+            Articles
+          </h3>
+          <div className="grid gap-4">
+            {myPosts.length === 0 ? (
+              <p className="text-center py-6 text-slate-400 italic text-sm font-medium">
+                You haven't published any health tips yet.
+              </p>
+            ) : (
+              myPosts.map((post) => (
+                <div
+                  key={post.id}
+                  className="flex items-center justify-between p-5 bg-slate-50/50 rounded-3xl border border-slate-100 hover:border-blue-100 transition-all"
+                >
+                  <div>
+                    <h4 className="font-bold text-slate-800">{post.title}</h4>
+                    <p className="text-[10px] text-blue-600 font-black uppercase tracking-tighter bg-blue-50 px-2 py-0.5 rounded-md mt-1 inline-block">
+                      {post.category}
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => toast("Editing feature coming soon")}
+                      className="p-2.5 bg-white text-slate-400 hover:text-blue-600 rounded-xl border border-slate-100 shadow-sm transition-colors"
+                    >
+                      <Settings size={18} />
+                    </button>
+                    <button
+                      onClick={() => handleDeletePost(post.id)}
+                      className="p-2.5 bg-white text-slate-400 hover:text-red-600 rounded-xl border border-slate-100 shadow-sm transition-colors"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* 4. TOOLS FOOTER */}
         <div className="mt-12 bg-gradient-to-r from-blue-600 to-indigo-600 p-10 rounded-[40px] shadow-2xl shadow-blue-200 flex flex-col md:flex-row justify-between items-center gap-8 relative overflow-hidden">
           <Activity
             className="absolute -right-10 -bottom-10 text-white/10"
@@ -413,31 +472,27 @@ const DoctorDashboard = () => {
           <div className="flex flex-col sm:flex-row gap-4 relative z-10 w-full md:w-auto">
             <Link
               to="/manage-advice"
-              className="bg-white text-emerald-600 px-8 py-3 rounded-2xl font-black text-sm shadow-xl hover:scale-105 transition-all flex items-center justify-center gap-2"
+              className="bg-white text-blue-600 px-8 py-3 rounded-2xl font-black text-sm shadow-xl flex items-center justify-center gap-2 hover:scale-105 transition-all"
             >
               <PlusCircle size={18} /> Add Advice
             </Link>
             <Link
               to="/create-post"
-              className="bg-emerald-100/20 backdrop-blur-md text-white border border-white/30 px-8 py-3 rounded-2xl font-black text-sm shadow-xl hover:scale-105 transition-all flex items-center justify-center gap-2"
+              className="bg-white/10 backdrop-blur-md text-white border border-white/30 px-8 py-3 rounded-2xl font-black text-sm shadow-xl flex items-center justify-center gap-2 hover:scale-105 transition-all"
             >
-              <PenTool size={18} /> Post Blog
+              <PenTool size={18} /> New Blog
             </Link>
           </div>
         </div>
       </div>
 
-      {/* --- MODALS --- */}
+      {/* --- ALL MODALS --- */}
       <Modal
         isOpen={isSettingsModalOpen}
         onClose={() => setIsSettingsModalOpen(false)}
         title="My Professional Identity"
       >
-        <form
-          onSubmit={updateDoctorProfile}
-          className="space-y-6 animate-in fade-in zoom-in-95 duration-300"
-        >
-          {/* Visual ID Card Preview */}
+        <form onSubmit={updateDoctorProfile} className="space-y-6">
           <div className="bg-gradient-to-br from-blue-600 to-indigo-700 p-6 rounded-[32px] text-white shadow-lg relative overflow-hidden">
             <Activity
               className="absolute -right-6 -bottom-6 opacity-10"
@@ -456,36 +511,22 @@ const DoctorDashboard = () => {
                 </p>
               </div>
             </div>
-            <div className="mt-6 flex justify-between border-t border-white/10 pt-4 relative z-10 text-[10px] uppercase font-bold opacity-60">
-              <span>Experience: {doctorData.experience_years || 0} Years</span>
+            <div className="mt-6 flex justify-between border-t border-white/10 pt-4 relative z-10 text-[10px] uppercase font-bold opacity-60 font-mono">
+              <span>EXP: {doctorData.experience_years || 0} Years</span>
               <span>ID: DOC-{user?.id}882</span>
             </div>
           </div>
-
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <label className="text-[10px] font-black text-slate-400 uppercase ml-2 tracking-widest">
-                Phone Line
-              </label>
-              <div className="relative">
-                <Phone
-                  className="absolute left-4 top-4 text-slate-300"
-                  size={18}
-                />
-                <input
-                  type="text"
-                  className="w-full pl-12 p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-blue-600 font-bold"
-                  value={doctorData.phone}
-                  onChange={(e) =>
-                    setDoctorData({ ...doctorData, phone: e.target.value })
-                  }
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-[10px] font-black text-slate-400 uppercase ml-2 tracking-widest">
+            <InputBox
+              label="Phone Line"
+              value={doctorData.phone}
+              icon={<Phone size={16} className="text-slate-300" />}
+              onChange={(e) =>
+                setDoctorData({ ...doctorData, phone: e.target.value })
+              }
+            />
+            <div>
+              <label className="text-[10px] font-black text-slate-400 uppercase ml-2 mb-1 block">
                 Years of Experience
               </label>
               <div className="relative">
@@ -495,8 +536,7 @@ const DoctorDashboard = () => {
                 />
                 <input
                   type="number"
-                  className="w-full pl-12 p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-blue-600 font-bold"
-                  placeholder="Years"
+                  className="w-full pl-12 p-4 bg-slate-50 border border-slate-100 rounded-2xl font-bold"
                   value={doctorData.experience_years}
                   onChange={(e) =>
                     setDoctorData({
@@ -509,38 +549,20 @@ const DoctorDashboard = () => {
               </div>
             </div>
           </div>
-
+          <InputBox
+            label="Clinic Location"
+            value={doctorData.clinic_address}
+            icon={<MapPin size={16} className="text-slate-300" />}
+            onChange={(e) =>
+              setDoctorData({ ...doctorData, clinic_address: e.target.value })
+            }
+          />
           <div className="space-y-1">
-            <label className="text-[10px] font-black text-slate-400 uppercase ml-2 tracking-widest">
-              Clinic Address
-            </label>
-            <div className="relative">
-              <MapPin
-                className="absolute left-4 top-4 text-slate-300"
-                size={18}
-              />
-              <input
-                type="text"
-                className="w-full pl-12 p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-blue-600 font-bold"
-                value={doctorData.clinic_address}
-                onChange={(e) =>
-                  setDoctorData({
-                    ...doctorData,
-                    clinic_address: e.target.value,
-                  })
-                }
-                required
-              />
-            </div>
-          </div>
-
-          <div className="space-y-1">
-            <label className="text-[10px] font-black text-slate-400 uppercase ml-2 tracking-widest">
+            <label className="text-[10px] font-black text-slate-400 uppercase ml-2 block">
               Biography
             </label>
             <textarea
               className="w-full p-5 bg-gray-50 border border-slate-100 rounded-[28px] h-32 outline-none focus:ring-2 focus:ring-blue-600 font-medium"
-              placeholder="Describe your expertise..."
               value={doctorData.bio}
               onChange={(e) =>
                 setDoctorData({ ...doctorData, bio: e.target.value })
@@ -548,11 +570,10 @@ const DoctorDashboard = () => {
               required
             />
           </div>
-
           <button
             type="submit"
             disabled={statusLoading}
-            className="w-full bg-blue-600 text-white p-5 rounded-[22px] font-black text-lg flex items-center justify-center gap-3 shadow-xl shadow-blue-100 hover:bg-blue-700 transition-all active:scale-95 disabled:opacity-50"
+            className="w-full bg-blue-600 text-white p-5 rounded-[22px] font-black text-lg flex items-center justify-center gap-3 shadow-xl active:scale-95 transition-all"
           >
             <Save size={22} />{" "}
             {statusLoading ? "Syncing..." : "Update My Profile"}
@@ -560,7 +581,6 @@ const DoctorDashboard = () => {
         </form>
       </Modal>
 
-      {/* Patient File Modal */}
       <Modal
         isOpen={isProfileModalOpen}
         onClose={() => setIsProfileModalOpen(false)}
@@ -617,7 +637,6 @@ const DoctorDashboard = () => {
         )}
       </Modal>
 
-      {/* Approval Modal */}
       <Modal
         isOpen={isInstructionModalOpen}
         onClose={() => setIsInstructionModalOpen(false)}
@@ -626,7 +645,7 @@ const DoctorDashboard = () => {
         <div className="space-y-6">
           <textarea
             className="w-full p-5 bg-gray-50 border border-gray-200 rounded-[28px] h-40 outline-none focus:ring-2 focus:ring-emerald-500 font-medium"
-            placeholder="Instructions..."
+            placeholder="Next steps for the patient..."
             value={instructions}
             onChange={(e) => setInstructions(e.target.value)}
           />
@@ -654,6 +673,24 @@ const StatCard = ({ title, count, icon, color }) => (
     </div>
     <div className={`${color} p-4 rounded-2xl text-white shadow-lg`}>
       {icon}
+    </div>
+  </div>
+);
+
+const InputBox = ({ label, value, icon, onChange }) => (
+  <div>
+    <label className="text-[10px] font-black text-slate-400 uppercase ml-2 mb-1 block">
+      {label}
+    </label>
+    <div className="relative">
+      <div className="absolute left-4 top-4">{icon}</div>
+      <input
+        className="w-full pl-12 p-4 bg-slate-50 border border-slate-100 rounded-2xl font-bold"
+        type="text"
+        value={value}
+        onChange={onChange}
+        required
+      />
     </div>
   </div>
 );

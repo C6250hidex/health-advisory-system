@@ -1,11 +1,12 @@
 const db = require("../config/db");
+const axios = require("axios"); // Required for Hugging Face API
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 // Initialize Google Gemini AI
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 exports.getAdvice = async (req, res) => {
-  // Support both POST (req.body) and GET (req.query)
+  // Support both POST (req.body) and GET (req.query) for maximum compatibility
   const { symptom, lat, lng, history } = req.body.symptom
     ? req.body
     : req.query;
@@ -19,7 +20,7 @@ exports.getAdvice = async (req, res) => {
   const userLng = lng || "0";
   const hospitalMap = `https://www.google.com/maps/search/hospital+near+me/@${userLat},${userLng},15z`;
 
-  // 1. EMERGENCY TRIAGE (Safety Check)
+  // 1. EMERGENCY TRIAGE (Safety Check - Highest Priority)
   const dangerKeywords = [
     "chest pain",
     "breathing",
@@ -43,7 +44,7 @@ exports.getAdvice = async (req, res) => {
   }
 
   try {
-    // 2. CHECK LOCAL DATABASE FIRST (Fuzzy matching for long strings)
+    // 2. MULTI-MATCH DATABASE SEARCH (Prioritize your specific medical records)
     const [dbResults] = await db.execute("SELECT * FROM health_advice");
     const matched = dbResults.filter((item) => {
       const keys = item.keywords
@@ -58,29 +59,25 @@ exports.getAdvice = async (req, res) => {
         matched.map((item) => ({
           ...item,
           severity: "found",
-          advice_text: `Verified Guidance: ${item.advice_text} (Note: If symptoms persist, please book a professional checkup.)`,
+          advice_text: `Verified Guidance: ${item.advice_text} (Note: This is based on our curated medical database.)`,
           hospital_link: hospitalMap,
         })),
       );
     }
 
-    // 3. PREPARE AI ENGINE
-    const systemPrompt = `
-        ROLE: Professional AI Health Assistant for HealthSync.
-        GUIDELINES:
-        - Provide accurate, safe, and helpful health-related information.
-        - If the user greets you (hi, hello, etc.), respond warmly and offer health assistance.
-        - ALWAYS ask follow-up questions if symptoms are vague.
-        - Give general advice and possible causes, NEVER a medical diagnosis.
-        - Encourage seeking professional medical help if symptoms are concerning.
-        - Do NOT prescribe medications or dosages.
-        - Be calm, empathetic, and professional.
-      `;
+    // 3. AI ENGINE FALLBACKS
+    const systemPrompt = `ROLE: Professional AI Health Assistant. Provide accurate, safe, helpful health info. NEVER diagnose. Suggest booking a doctor if symptoms persist. Be calm and professional.`;
+    let botText = "";
 
-    // Format and Clean History (Gemini requires first message to be from 'user')
-    let cleanedHistory = [];
-    if (history && Array.isArray(history)) {
-      cleanedHistory = history
+    try {
+      // --- Level A: Attempt Google Gemini Flash ---
+      const model = genAI.getGenerativeModel({
+        model: "gemini-1.5-flash",
+        systemInstruction: systemPrompt,
+      });
+
+      // Format history (Gemini requires first message to be from 'user')
+      let cleanedHistory = (history || [])
         .map((item) => ({
           role:
             item.sender === "bot" || item.role === "model" ? "model" : "user",
@@ -89,37 +86,38 @@ exports.getAdvice = async (req, res) => {
             : [{ text: item.text || "" }],
         }))
         .filter((item) => item.parts[0].text.length > 0);
-
-      if (cleanedHistory.length > 0 && cleanedHistory[0].role === "model") {
+      if (cleanedHistory.length > 0 && cleanedHistory[0].role === "model")
         cleanedHistory.shift();
-      }
-    }
-
-    // 4. AI EXECUTION WITH FALLBACK (Fixes the 404 Error)
-    let botText = "";
-
-    try {
-      // Try the newer 'flash' model first
-      const model = genAI.getGenerativeModel({
-        model: "gemini-1.5-flash",
-        systemInstruction: systemPrompt,
-      });
 
       const chat = model.startChat({ history: cleanedHistory });
       const result = await chat.sendMessage(symptom);
       botText = result.response.text();
-    } catch (innerErr) {
-      console.warn("Flash model unavailable, falling back to Gemini-Pro...");
+    } catch (geminiErr) {
+      console.warn("Gemini Failed, attempting Hugging Face Fallback...");
 
-      // FALLBACK: Use the standard 'gemini-pro' model
-      const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+      try {
+        // --- Level B: Attempt Hugging Face (Mistral-7B) ---
+        const hfResponse = await axios.post(
+          "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2",
+          {
+            inputs: `<s>[INST] ${systemPrompt} User Question: ${symptom} [/INST]`,
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${process.env.HUGGINGFACE_API_KEY}`,
+            },
+          },
+        );
 
-      // gemini-pro (v1) doesn't always support systemInstruction as a parameter,
-      // so we include it in the prompt itself.
-      const result = await model.generateContent(
-        `${systemPrompt}\n\nUser Question: ${symptom}`,
-      );
-      botText = result.response.text();
+        // Extracting text from Hugging Face structure
+        const fullText = hfResponse.data[0].generated_text;
+        botText = fullText.split("[/INST]").pop().trim();
+      } catch (hfErr) {
+        console.error("Hugging Face also failed:", hfErr.message);
+        // --- Level C: Final Fallback ---
+        botText =
+          "I am experiencing a high volume of requests. Based on your symptoms, I strongly recommend booking a consultation with one of our verified specialists for a safe evaluation.";
+      }
     }
 
     return res.json([
@@ -135,7 +133,7 @@ exports.getAdvice = async (req, res) => {
       {
         severity: "unknown",
         advice_text:
-          "I am experiencing a slight delay in processing. If you feel unwell, please book a consultation with one of our specialists or visit the nearest hospital.",
+          "I am experiencing a slight delay in processing. If you feel unwell, please book a consultation with one of our specialists using the buttons below.",
         hospital_link: hospitalMap,
       },
     ]);
