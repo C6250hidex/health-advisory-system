@@ -20,8 +20,7 @@ const Navbar = () => {
 
   const handleLogout = () => {
     localStorage.clear();
-    navigate("/login");
-    window.location.reload();
+    window.location.href = "/";
   };
 
   return (
