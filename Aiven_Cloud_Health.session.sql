@@ -1,6 +1,6 @@
 -- 1. Setup Database
 USE defaultdb;
-
+UPDATE users SET role = 'admin', is_verified = 1 WHERE email = 'chidex6250@gmail.com';
 -- 2. Users Table
 CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
