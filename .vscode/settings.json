@@ -13,8 +13,22 @@
       "name": "health_db",
       "database": "mysql",
       "username": "root",
-      "password": "CHIdex20042605@",
+
       "connectionTimeout": 6
+    },
+    {
+      "mysqlOptions": {
+        "authProtocol": "default",
+        "enableSsl": "Disabled"
+      },
+      "ssh": "Disabled",
+      "previewLimit": 50,
+      "server": "mysql-ded0d0f-chidex6250-f0ac.d.aivencloud.com",
+      "port": 17071,
+      "driver": "MySQL",
+      "name": "Aiven_Cloud_Health",
+      "database": "defaultdb",
+      "username": "avnadmin"
     }
   ]
 }

@@ -6,6 +6,14 @@ const pool = mysql.createPool({
   user: process.env.DB_USER,
   password: process.env.DB_PASS,
   database: process.env.DB_NAME,
+  port: process.env.DB_PORT || 17071,
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0,
+  // Add SSL support for Cloud Databases
+  ssl: {
+    rejectUnauthorized: false,
+  },
 });
 
 module.exports = pool.promise();

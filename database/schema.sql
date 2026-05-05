@@ -213,3 +213,6 @@ USE health_system_db;
 UPDATE posts
 SET category = 'Fitness'
 WHERE id = 4;
+
+
+

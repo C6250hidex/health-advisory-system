@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  // If we are on a deployed site, use the real backend URL, otherwise use localhost
+  // This tells React to use the Render URL when online, and localhost when developing
   baseURL: import.meta.env.VITE_API_URL || "http://localhost:5000/api",
 });
 
