@@ -130,7 +130,7 @@ const Chatbot = () => {
           </span>
         </button>
       ) : (
-        <div className="bg-white w-[350px] sm:w-[420px] h-[550px] rounded-[45px] shadow-[0_20px_50px_rgba(0,0,0,0.3)] border border-slate-100 flex flex-col overflow-hidden animate-in slide-in-from-bottom-10 duration-500">
+        <div className="bg-white w-[350px] sm:w-[420px] h-[450px] rounded-[45px] shadow-[0_20px_50px_rgba(0,0,0,0.3)] border border-slate-100 flex flex-col overflow-hidden animate-in slide-in-from-bottom-10 duration-500">
           {/* Header */}
           <div className="bg-slate-900 p-6 text-white flex justify-between items-center">
             <div className="flex items-center gap-3">
