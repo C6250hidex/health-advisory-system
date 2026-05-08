@@ -1,33 +1,25 @@
-const nodemailer = require("nodemailer");
+const { Resend } = require("resend");
+require("dotenv").config();
 
-const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 465,
-  secure: true,
-  auth: {
-    user: process.env.EMAIL_USER, // your gmail
-    password: process.env.EMAIL_PASS, // your 16-digit App Password
-  },
-  family: 4, // FORCES IPv4 - CRITICAL for Render
-  connectionTimeout: 30000,
-  greetingTimeout: 30000,
-});
+// Initialize Resend with your API Key
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 const sendEmail = async (to, subject, text) => {
-  const mailOptions = {
-    from: `"HealthSync System" <${process.env.EMAIL_USER}>`,
-    to,
-    subject,
-    text,
-  };
-
   try {
-    await transporter.sendMail(mailOptions);
-    console.log("SUCCESS: Email sent to " + to);
-    return true;
+    const data = await resend.emails.send({
+      // Note: On the free tier, you must send FROM 'onboarding@resend.dev'
+      // unless you verify a custom domain.
+      from: "HealthSync <onboarding@resend.dev>",
+      to: [to],
+      subject: subject,
+      text: text,
+    });
+
+    console.log("Email API Success:", data.id);
+    return { success: true, id: data.id };
   } catch (error) {
-    console.error("NODEMAILER ERROR:", error.message);
-    return false;
+    console.error("EMAIL API ERROR:", error.message);
+    return { success: false, error: error.message };
   }
 };
 
