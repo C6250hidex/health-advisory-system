@@ -191,11 +191,7 @@ INSERT INTO health_advice (keywords, advice_text) VALUES
 ('hair loss', 'Hair loss may result from stress or nutritional deficiency. Advice: Maintain balanced nutrition and reduce harsh treatments.'),
 ('dry skin', 'Dry skin may worsen in harsh weather conditions. Advice: Use moisturizers regularly and drink enough water.'),
 ('heat stroke', 'Heat stroke is a medical emergency caused by overheating. Advice: Seek emergency medical care immediately.'),
-('panic attack', 'Panic attacks may cause rapid breathing and fear. Advice: Practice slow breathing and seek mental health support.'),
-
-USE defaultdb;
-INSERT INTO health_advice (keywords, advice_text) VALUES 
-('shortness of breath', 'Difficulty breathing may indicate a serious medical condition. Advice: Sit upright and seek urgent medical attention.'),
+('panic attack', 'Panic attacks may cause rapid breathing and fear. Advice: Practice slow breathing and seek mental health support.'),('shortness of breath', 'Difficulty breathing may indicate a serious medical condition. Advice: Sit upright and seek urgent medical attention.'),
 
 ('back pain', 'Back pain may result from strain or poor posture. Advice: Avoid heavy lifting and apply warm compresses.'),
 
@@ -275,7 +271,7 @@ INSERT INTO health_advice (keywords, advice_text) VALUES
 
 ('breast pain', 'Breast pain may occur due to hormonal changes or strain. Advice: Monitor symptoms and seek evaluation if persistent.'),
 
-('irregular menstruation', 'Irregular menstrual cycles may result from stress or hormonal imbalance. Advice: Monitor cycles and seek medical advice if persistent.');
+('irregular menstruation', 'Irregular menstrual cycles may result from stress or hormonal imbalance. Advice: Monitor cycles and seek medical advice if persistent.'),
 
 ('persistent coughing', 'Persistent coughing may indicate infection or irritation. Advice: Stay hydrated and seek care if symptoms continue.'),
 
