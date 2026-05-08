@@ -3,14 +3,14 @@ const nodemailer = require("nodemailer");
 const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
   port: 465,
-  secure: true, // Use SSL for port 465
+  secure: true,
   auth: {
-    user: process.env.EMAIL_USER,
-    password: process.env.EMAIL_PASS, // The 16-digit code
+    user: process.env.EMAIL_USER, // your gmail
+    password: process.env.EMAIL_PASS, // your 16-digit App Password
   },
-  family: 4, // CRITICAL: Forces IPv4 (Fixes Render network errors)
-  connectionTimeout: 20000, // Give it 20 seconds
-  greetingTimeout: 20000,
+  family: 4, // FORCES IPv4 - CRITICAL for Render
+  connectionTimeout: 30000,
+  greetingTimeout: 30000,
 });
 
 const sendEmail = async (to, subject, text) => {
@@ -22,8 +22,8 @@ const sendEmail = async (to, subject, text) => {
   };
 
   try {
-    const info = await transporter.sendMail(mailOptions);
-    console.log("Email successful:", info.response);
+    await transporter.sendMail(mailOptions);
+    console.log("SUCCESS: Email sent to " + to);
     return true;
   } catch (error) {
     console.error("NODEMAILER ERROR:", error.message);

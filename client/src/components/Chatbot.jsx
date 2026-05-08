@@ -45,75 +45,53 @@ const Chatbot = () => {
     if (!input.trim()) return;
 
     const userText = input;
-    const userMsg = { id: Date.now(), text: userText, sender: "user" };
-
-    // Format history for the backend (Gemini requirement)
-    const chatHistory = messages.map((m) => ({
-      role: m.sender === "bot" ? "model" : "user",
-      parts: [{ text: m.text }],
-    }));
-
-    setMessages((prev) => [...prev, userMsg]);
+    setMessages((prev) => [
+      ...prev,
+      { id: Date.now(), text: userText, sender: "user" },
+    ]);
     setInput("");
     setIsTyping(true);
 
     try {
-      // API call using POST to handle symptom, location, and history
       const res = await api.post("/advice", {
         symptom: userText,
         lat: location.lat,
         lng: location.lng,
-        history: chatHistory,
+        history: messages.map((m) => ({
+          role: m.sender === "bot" ? "model" : "user",
+          text: m.text,
+        })),
       });
 
       if (res.data && res.data.length > 0) {
-        // --- MULTI-MATCH INTEGRATION START ---
-        // Combine all advice found into one structured message
-        const combinedText = res.data
-          .map((item) => item.advice_text)
+        // JOIN ALL ADVICE with double line breaks and a divider
+        const combinedAdvice = res.data
+          .map((item, index) => {
+            return res.data.length > 1
+              ? `[Point ${index + 1}]: ${item.advice_text}`
+              : item.advice_text;
+          })
           .join("\n\n---\n\n");
-        const firstMatch = res.data[0];
 
-        setTimeout(() => {
-          setMessages((prev) => [
-            ...prev,
-            {
-              id: Date.now() + 1,
-              text: combinedText,
-              sender: "bot",
-              severity: firstMatch.severity,
-              map: firstMatch.hospital_link, // 'map' used in escalation buttons below
-            },
-          ]);
-          setIsTyping(false);
-        }, 800);
-        // --- MULTI-MATCH INTEGRATION END ---
-      } else {
-        setIsTyping(false);
+        const firstResult = res.data[0];
+
         setMessages((prev) => [
           ...prev,
           {
-            id: Date.now(),
-            text: "I couldn't find specific advice. Please book a doctor.",
+            id: Date.now() + 1,
+            text: combinedAdvice,
             sender: "bot",
-            severity: "unknown",
+            severity: firstResult.severity,
+            map: firstResult.hospital_link,
           },
         ]);
       }
     } catch (err) {
-      console.error("Frontend Chat Error:", err);
+      console.error(err);
+    } finally {
       setIsTyping(false);
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now() + 1,
-          text: "I'm having trouble connecting to the medical server. Please try again or seek direct help.",
-          sender: "bot",
-        },
-      ]);
     }
   };
-
   return (
     <div className="fixed bottom-24 right-6 z-[100] md:bottom-8">
       {!isOpen ? (

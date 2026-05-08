@@ -4,8 +4,9 @@ const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const sendEmail = require("../services/emailService");
 
-// 1. REGISTER: Handles Patient/Doctor, generates Verification Token, and sends Email
+// 1. REGISTER: Unified logic for Patients and Doctors with Email Verification
 exports.register = async (req, res) => {
+  // Destructure all possible fields from the request
   const { name, email, password, role, license, specialization } = req.body;
 
   try {
@@ -18,31 +19,20 @@ exports.register = async (req, res) => {
       return res.status(400).json({ message: "User already exists" });
     }
 
-    // Generate Verification Token
-    const verificationToken = crypto.randomBytes(32).toString("hex");
+    // Generate secure Verification Token
+    const token = crypto.randomBytes(32).toString("hex");
 
-    // Hash Password
+    // Hash the password for security
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    // Initial Verification Status:
-    // Everyone starts as 0 (unverified) because they must confirm their email first.
-    const isVerified = 0;
-
-    // Save user to users table
+    // Save user to database with is_verified = 0 (Requires email activation)
     const [newUser] = await db.execute(
-      "INSERT INTO users (name, email, password, role, is_verified, verification_token) VALUES (?, ?, ?, ?, ?, ?)",
-      [
-        name,
-        email,
-        hashedPassword,
-        role || "user",
-        isVerified,
-        verificationToken,
-      ],
+      "INSERT INTO users (name, email, password, role, is_verified, verification_token) VALUES (?, ?, ?, ?, 0, ?)",
+      [name, email, hashedPassword, role || "user", token],
     );
 
-    // If it's a doctor, create their professional profile in the doctors table
+    // If the user registered as a doctor, create their profile in the doctors table
     if (role === "doctor") {
       await db.execute(
         "INSERT INTO doctors (name, specialization, user_id) VALUES (?, ?, ?)",
@@ -50,15 +40,16 @@ exports.register = async (req, res) => {
       );
     }
 
-    // Send Verification Email
-    const verifyLink = `${process.env.FRONTEND_URL}/verify-email/${verificationToken}`;
-    const emailText = `Hello ${name},\n\nThank you for joining HealthSync. Please click the link below to verify your email address and activate your account:\n\n${verifyLink}\n\nIf you did not create this account, please ignore this email.`;
+    // Build the verification link using FRONTEND_URL from your Render environment
+    const verifyLink = `${process.env.FRONTEND_URL}/verify-email/${token}`;
 
-    await sendEmail(email, "Verify Your HealthSync Account", emailText);
+    const emailText = `Welcome to HealthSync, ${name}!\n\nPlease click the link below to verify your email and activate your account:\n\n${verifyLink}\n\nStay healthy!`;
+
+    // Send the activation email
+    await sendEmail(email, "Activate Your HealthSync Account", emailText);
 
     res.status(201).json({
-      message:
-        "Registration successful! Please check your email to verify your account before logging in.",
+      message: "Success! Please check your email inbox to verify your account.",
     });
   } catch (err) {
     console.error("Register Error:", err.message);
@@ -66,7 +57,7 @@ exports.register = async (req, res) => {
   }
 };
 
-// 2. LOGIN: Validates credentials and returns JWT
+// 2. LOGIN: Validates credentials and ensures email is verified
 exports.login = async (req, res) => {
   const { email, password } = req.body;
 
@@ -81,18 +72,20 @@ exports.login = async (req, res) => {
 
     const user = users[0];
 
-    // Check if Email is verified
+    // BLOCK LOGIN if email is not yet verified (unless it's an admin bypass)
     if (user.is_verified === 0 && user.role !== "admin") {
       return res
         .status(401)
         .json({ message: "Please verify your email before logging in." });
     }
 
+    // Check password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(400).json({ message: "Invalid Email or Password" });
     }
 
+    // Create JWT Session Token
     const token = jwt.sign(
       { id: user.id, role: user.role },
       process.env.JWT_SECRET,
@@ -114,11 +107,11 @@ exports.login = async (req, res) => {
   }
 };
 
-// 3. FORGOT PASSWORD: Generates Reset Token and sends Email
+// 3. FORGOT PASSWORD: Sends reset link
 exports.forgotPassword = async (req, res) => {
   const { email } = req.body;
   const token = crypto.randomBytes(32).toString("hex");
-  const expires = new Date(Date.now() + 3600000); // 1 hour expiry
+  const expires = new Date(Date.now() + 3600000); // 1 hour valid
 
   try {
     const [user] = await db.execute("SELECT id FROM users WHERE email = ?", [
@@ -143,7 +136,7 @@ exports.forgotPassword = async (req, res) => {
   }
 };
 
-// 4. VERIFY EMAIL: Route that activates the account
+// 4. VERIFY EMAIL: Activates the account
 exports.verifyEmail = async (req, res) => {
   const { token } = req.params;
   try {
@@ -151,9 +144,11 @@ exports.verifyEmail = async (req, res) => {
       "SELECT id FROM users WHERE verification_token = ?",
       [token],
     );
-    if (user.length === 0)
+    if (user.length === 0) {
       return res.status(400).json({ message: "Invalid or expired token." });
+    }
 
+    // Set verified to 1 and clear the token
     await db.execute(
       "UPDATE users SET is_verified = 1, verification_token = NULL WHERE id = ?",
       [user[0].id],

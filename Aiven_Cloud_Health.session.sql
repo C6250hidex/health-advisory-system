@@ -96,9 +96,7 @@ CREATE TABLE IF NOT EXISTS posts (
 -- ('Dr. Sarah Lee', 'Pediatrician', 1, 'Compassionate care for children and infants.');
 
 -- 10. SEED INITIAL ADVICE
-USE defaultdb;
-INSERT INTO health_advice (keywords, advice_text) VALUES 
-('headache', 'Persistent headaches may be caused by stress, dehydration, or fatigue. Advice: Stay hydrated, rest properly, and reduce screen exposure.'),
+INSERT INTO health_advice (keywords, advice_text) VALUES ('headache', 'Persistent headaches may be caused by stress, dehydration, or fatigue. Advice: Stay hydrated, rest properly, and reduce screen exposure.'),
 
 ('fever', 'Fever may indicate infection. Advice: Drink plenty of fluids, rest adequately, and monitor your temperature regularly.'),
 
@@ -187,20 +185,30 @@ INSERT INTO health_advice (keywords, advice_text) VALUES
 ('pregnancy nausea', 'Pregnancy nausea is common in early pregnancy. Advice: Eat small frequent meals and avoid strong odors.'),
 
 ('menstrual pain', 'Menstrual cramps may cause lower abdominal discomfort. Advice: Apply warm compresses and stay hydrated.'),
+
 ('acne', 'Acne may occur due to excess oil production. Advice: Wash gently and avoid harsh skin products.'),
+
 ('hair loss', 'Hair loss may result from stress or nutritional deficiency. Advice: Maintain balanced nutrition and reduce harsh treatments.'),
+
 ('dry skin', 'Dry skin may worsen in harsh weather conditions. Advice: Use moisturizers regularly and drink enough water.'),
+
 ('heat stroke', 'Heat stroke is a medical emergency caused by overheating. Advice: Seek emergency medical care immediately.'),
-('panic attack', 'Panic attacks may cause rapid breathing and fear. Advice: Practice slow breathing and seek mental health support.'),
-USE defaultdb;
-INSERT INTO health_advice (keywords, advice_text) VALUES ('shortness of breath', 'Difficulty breathing may indicate a serious medical condition. Advice: Sit upright and seek urgent medical attention.')
+
+('panic attack', 'Panic attacks may cause rapid breathing and fear. Advice: Practice slow breathing and seek mental health support.'),('shortness of breath', 'Difficulty breathing may indicate a serious medical condition. Advice: Sit upright and seek urgent medical attention.'),
+
 ('back pain', 'Back pain may result from strain or poor posture. Advice: Avoid heavy lifting and apply warm compresses.'),
+
 ('chest congestion', 'Chest congestion may occur with respiratory infections. Advice: Drink warm fluids and rest adequately.'),
+
 ('wheezing', 'Wheezing may indicate airway narrowing. Advice: Avoid smoke exposure and seek medical care if symptoms worsen.'),
+
 ('loss of taste', 'Loss of taste may occur during infections. Advice: Stay hydrated and monitor additional symptoms.'),
+
 ('loss of smell', 'Loss of smell may result from infections or allergies. Advice: Seek medical advice if symptoms persist.'),
+
 ('swollen lymph nodes', 'Swollen lymph nodes may indicate infection. Advice: Rest adequately and monitor for fever.'),
-('mouth ulcers', 'Mouth ulcers may result from irritation or stress. Advice: Avoid spicy foods and maintain oral hygiene.');
+
+('mouth ulcers', 'Mouth ulcers may result from irritation or stress. Advice: Avoid spicy foods and maintain oral hygiene.'),
 
 ('gum bleeding', 'Bleeding gums may indicate poor oral health. Advice: Brush gently and schedule a dental evaluation.'),
 
@@ -1126,7 +1134,228 @@ INSERT INTO health_advice (keywords, advice_text) VALUES ('shortness of breath',
 
 ('male chronic stress', 'Chronic stress in men may affect physical health. Advice: Practice relaxation techniques and maintain balance.'),
 
-('female chronic stress', 'Chronic stress in women may affect emotional health. Advice: Seek support and maintain healthy routines.')
+('female chronic stress', 'Chronic stress in women may affect emotional health. Advice: Seek support and maintain healthy routines.'),('cold', 'The common cold is viral. Advice: Drink warm fluids, rest well, and take vitamin C rich foods.'),
+
+('fever', 'Fever may indicate infection. Advice: Stay hydrated, rest, and monitor body temperature.'),
+
+('malaria', 'Malaria is caused by mosquito bites. Advice: Seek medical treatment and use prescribed antimalarial drugs.'),
+
+('headache', 'Headache may result from stress or dehydration. Advice: Rest in a quiet room and drink water.'),
+
+('toothache', 'Toothache may indicate dental infection. Advice: Avoid sugary foods and see a dentist.'),
+
+('diarrhea', 'Diarrhea may cause dehydration. Advice: Drink ORS and avoid oily foods.'),
+
+('constipation', 'Constipation affects bowel movement. Advice: Eat fiber-rich foods and drink plenty of water.'),
+
+('cough', 'Cough may be viral or bacterial. Advice: Drink warm fluids and avoid cold air exposure.'),
+
+('sore throat', 'Sore throat may be due to infection. Advice: Gargle warm salt water and rest your voice.'),
+
+('flu', 'Flu is a viral infection. Advice: Rest, hydrate, and take prescribed medication if needed.'),
+
+('asthma', 'Asthma affects breathing. Advice: Avoid triggers and use inhaler as prescribed.'),
+
+('high blood pressure', 'High BP increases heart risk. Advice: Reduce salt intake and exercise regularly.'),
+
+('low blood pressure', 'Low BP may cause dizziness. Advice: Drink fluids and avoid sudden standing.'),
+
+('diabetes', 'Diabetes affects blood sugar. Advice: Monitor sugar levels and maintain healthy diet.'),
+
+('ulcer', 'Ulcer causes stomach pain. Advice: Avoid spicy foods and take prescribed medication.'),
+
+('back pain', 'Back pain may be due to posture. Advice: Exercise gently and avoid heavy lifting.'),
+
+('neck pain', 'Neck pain may result from strain. Advice: Stretch gently and maintain good posture.'),
+
+('eye strain', 'Eye strain comes from screens. Advice: Rest eyes every 20 minutes.'),
+
+('insomnia', 'Insomnia affects sleep. Advice: Avoid screens before bed and maintain sleep routine.'),
+
+('stress', 'Stress affects mental health. Advice: Practice relaxation and deep breathing.'),
+
+('anxiety', 'Anxiety affects mood. Advice: Talk to someone and practice mindfulness.'),
+
+('depression', 'Depression affects emotions. Advice: Seek professional mental health support.'),
+
+('obesity', 'Obesity increases health risks. Advice: Exercise regularly and eat balanced meals.'),
+
+('malnutrition', 'Malnutrition weakens the body. Advice: Eat balanced diet with proteins and vitamins.'),
+
+('dehydration', 'Dehydration reduces body fluid. Advice: Drink enough water daily.'),
+
+('food poisoning', 'Food poisoning is from contaminated food. Advice: Drink fluids and seek care if severe.'),
+
+('ear infection', 'Ear infection causes pain. Advice: Avoid inserting objects and see a doctor.'),
+
+('sinus infection', 'Sinus infection causes facial pain. Advice: Use steam inhalation and rest.'),
+
+('arthritis', 'Arthritis affects joints. Advice: Exercise gently and use anti-inflammatory medication.'),
+
+('allergy', 'Allergy causes reactions. Advice: Avoid triggers and use antihistamines if prescribed.'),
+
+('skin rash', 'Skin rash may be allergic. Advice: Keep skin clean and avoid irritants.'),
+
+('eczema', 'Eczema causes itchy skin. Advice: Moisturize regularly and avoid harsh soaps.'),
+
+('fungal infection', 'Fungal infection affects skin. Advice: Keep area dry and use antifungal cream.'),
+
+('UTI', 'Urinary tract infection causes pain. Advice: Drink water and take antibiotics if prescribed.'),
+
+('kidney pain', 'Kidney pain may indicate infection. Advice: Seek medical attention immediately.'),
+
+('liver disease', 'Liver disease affects detoxification. Advice: Avoid alcohol and eat healthy diet.'),
+
+('heart disease', 'Heart disease affects circulation. Advice: Exercise and avoid fatty foods.'),
+
+('stroke', 'Stroke is a medical emergency. Advice: Seek immediate hospital care.'),
+
+('migraine', 'Migraine causes severe headache. Advice: Rest in dark room and avoid triggers.'),
+
+('fatigue', 'Fatigue reduces energy. Advice: Sleep well and eat nutritious food.'),
+
+('weakness', 'Weakness may indicate illness. Advice: Rest and hydrate properly.'),
+
+('vomiting', 'Vomiting may cause dehydration. Advice: Drink small fluids and rest.'),
+
+('nausea', 'Nausea affects appetite. Advice: Eat light meals and stay hydrated.'),
+
+('chest pain', 'Chest pain may be serious. Advice: Seek emergency medical attention.'),
+
+('breathing difficulty', 'Breathing difficulty is serious. Advice: Seek urgent medical help.'),
+
+('palpitations', 'Palpitations affect heart rhythm. Advice: Reduce caffeine and seek evaluation.'),
+
+('menstrual pain', 'Menstrual pain is common. Advice: Use warm compress and rest.'),
+
+('pregnancy nausea', 'Pregnancy nausea is common. Advice: Eat small meals frequently.'),
+
+('low immunity', 'Low immunity increases infections. Advice: Eat healthy and rest well.'),
+
+('weight loss', 'Unexplained weight loss may indicate illness. Advice: Seek medical evaluation.'),('hypertension', 'Hypertension is high blood pressure. Advice: Reduce salt intake, exercise regularly, and monitor blood pressure.'),
+
+('hypotension', 'Low blood pressure may cause dizziness. Advice: Drink fluids and avoid sudden standing.'),
+
+('dizziness', 'Dizziness may result from dehydration or low blood pressure. Advice: Sit down, rest, and drink water.'),
+
+('blurred vision', 'Blurred vision may indicate eye strain or medical issues. Advice: Rest eyes and seek medical evaluation if persistent.'),
+
+('ear pain', 'Ear pain may be caused by infection. Advice: Avoid inserting objects and seek medical care.'),
+
+('sinus pain', 'Sinus pain may result from infection. Advice: Use steam inhalation and rest adequately.'),
+
+('nosebleed', 'Nosebleeds may occur due to dryness or injury. Advice: Pinch nostrils and lean forward gently.'),
+
+('chest tightness', 'Chest tightness may indicate respiratory or heart issues. Advice: Seek immediate medical attention if severe.'),
+
+('shortness of breath', 'Shortness of breath may be serious. Advice: Sit upright and seek urgent medical care.'),
+
+('rapid heartbeat', 'Rapid heartbeat may be due to stress or heart conditions. Advice: Avoid stimulants and rest calmly.'),
+
+('slow heartbeat', 'Slow heartbeat may indicate heart issues. Advice: Seek medical evaluation if symptoms persist.'),
+
+('hand pain', 'Hand pain may result from strain. Advice: Rest the hand and avoid repetitive motion.'),
+
+('leg pain', 'Leg pain may be due to muscle strain or circulation issues. Advice: Rest and stretch gently.'),
+
+('foot pain', 'Foot pain may result from poor footwear. Advice: Wear comfortable shoes and rest.'),
+
+('ankle sprain', 'Ankle sprain occurs from injury. Advice: Apply ice, rest, and elevate the leg.'),
+
+('knee pain', 'Knee pain may be from injury or arthritis. Advice: Rest and avoid heavy activity.'),
+
+('shoulder stiffness', 'Shoulder stiffness may result from poor posture. Advice: Stretch gently and apply warm compress.'),
+
+('muscle strain', 'Muscle strain is caused by overuse. Advice: Rest and avoid heavy lifting.'),
+
+('sprain', 'Sprain affects ligaments. Advice: Rest, ice, and elevate the affected area.'),
+
+('fracture pain', 'Fracture pain is severe bone injury. Advice: Seek emergency medical attention.'),
+
+('burn injury', 'Burns require immediate care. Advice: Cool with water and avoid applying oils.'),
+
+('cuts and wounds', 'Cuts may lead to infection. Advice: Clean properly and cover with bandage.'),
+
+('bleeding', 'Excessive bleeding is dangerous. Advice: Apply pressure and seek urgent care.'),
+
+('infection', 'Infection occurs due to bacteria or viruses. Advice: Seek medical treatment promptly.'),
+
+('fever chills', 'Fever with chills may indicate infection. Advice: Rest and drink fluids.'),
+
+('night sweats', 'Night sweats may indicate illness. Advice: Monitor symptoms and seek medical advice.'),
+
+('loss of appetite', 'Loss of appetite may indicate illness. Advice: Eat small nutritious meals.'),
+
+('weight gain', 'Weight gain may be due to lifestyle. Advice: Exercise regularly and eat balanced diet.'),
+
+('sleep apnea', 'Sleep apnea affects breathing during sleep. Advice: Seek sleep study evaluation.'),
+
+('snoring', 'Snoring may indicate airway blockage. Advice: Maintain healthy weight and sleep position.'),
+
+('memory loss', 'Memory loss may indicate neurological issues. Advice: Seek medical evaluation if persistent.'),
+
+('confusion', 'Confusion may be serious. Advice: Seek immediate medical attention.'),
+
+('seizures', 'Seizures require urgent care. Advice: Protect patient and seek emergency help.'),
+
+('tremors', 'Tremors may indicate neurological conditions. Advice: Seek medical evaluation.'),
+
+('paralysis', 'Paralysis is medical emergency. Advice: Seek immediate hospital care.'),
+
+('speech difficulty', 'Speech difficulty may indicate stroke. Advice: Seek emergency care immediately.'),
+
+('facial droop', 'Facial droop may indicate stroke. Advice: Call emergency services immediately.'),
+
+('loss of balance', 'Loss of balance may indicate neurological issues. Advice: Seek medical evaluation.'),
+
+('skin infection', 'Skin infection causes redness and swelling. Advice: Keep area clean and seek treatment.'),
+
+('boils', 'Boils are skin infections. Advice: Avoid squeezing and apply warm compress.'),
+
+('acne', 'Acne affects skin health. Advice: Wash face regularly and avoid oily foods.'),
+
+('dry skin', 'Dry skin may cause irritation. Advice: Moisturize regularly and drink water.'),
+
+('hair loss', 'Hair loss may be hormonal or nutritional. Advice: Eat balanced diet and reduce stress.'),
+
+('dandruff', 'Dandruff affects scalp. Advice: Use anti-dandruff shampoo regularly.'),
+
+('itching skin', 'Skin itching may be allergy related. Advice: Avoid irritants and keep skin clean.'),
+
+('sunburn', 'Sunburn is skin damage from sun. Advice: Apply cool compress and avoid sun exposure.'),
+
+('heat rash', 'Heat rash occurs in hot weather. Advice: Keep skin cool and dry.'),
+
+('cold symptoms', 'Cold symptoms include sneezing and runny nose. Advice: Rest and drink warm fluids.'),
+
+('flu symptoms', 'Flu symptoms include fever and body pain. Advice: Rest and stay hydrated.'),
+
+('COVID symptoms', 'COVID symptoms include cough and fever. Advice: Isolate and seek medical testing.'),
+
+('pneumonia', 'Pneumonia affects lungs. Advice: Seek immediate medical treatment.'),
+
+('tuberculosis', 'TB affects lungs and spreads through air. Advice: Complete full treatment course.'),
+
+('HIV symptoms', 'HIV affects immune system. Advice: Get tested and seek medical care.'),
+
+('hepatitis', 'Hepatitis affects liver. Advice: Avoid alcohol and seek treatment.'),
+
+('malaria relapse', 'Malaria relapse may occur after infection. Advice: Complete full medication course.'),
+
+('typhoid', 'Typhoid causes fever and weakness. Advice: Drink clean water and take antibiotics.'),
+
+('cholera', 'Cholera causes severe diarrhea. Advice: Drink ORS and seek emergency care.'),
+
+('depression symptoms', 'Depression affects mood and energy. Advice: Seek mental health support.'),
+
+('anxiety symptoms', 'Anxiety causes worry and restlessness. Advice: Practice relaxation techniques.'),
+
+('panic attack', 'Panic attacks cause sudden fear. Advice: Breathe slowly and seek support.'),
+
+('stress overload', 'Excess stress affects health. Advice: Rest and reduce workload.'),
+
+('burnout', 'Burnout causes exhaustion. Advice: Take breaks and rest adequately.')
+
 
 
 -- 1. Update Users Table for Verification and Password Reset
@@ -1139,16 +1368,4 @@ MODIFY COLUMN is_verified BOOLEAN DEFAULT 0;
 -- 2. Ensure Email uniqueness (if not already)
 -- ALTER TABLE users ADD UNIQUE (email);
 
-USE defaultdb;
-
--- 1. Change keywords to TEXT (allows much more data)
-ALTER TABLE health_advice MODIFY COLUMN keywords TEXT;
-
--- 2. Change advice_text to LONGTEXT (just in case the advice is long)
-ALTER TABLE health_advice MODIFY COLUMN advice_text LONGTEXT;
-
--- 3. Reset the ID counter so it doesn't get stuck
-ALTER TABLE health_advice AUTO_INCREMENT = 1;
-
--- 4. Check if the table is currently locked
-COMMIT;
+INSERT INTO health_advice (keywords, advice_text) VALUES

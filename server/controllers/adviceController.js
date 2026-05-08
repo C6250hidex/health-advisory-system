@@ -1,12 +1,12 @@
 const db = require("../config/db");
-const axios = require("axios"); // Required for Hugging Face API
+const axios = require("axios");
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 // Initialize Google Gemini AI
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 exports.getAdvice = async (req, res) => {
-  // Support both POST (req.body) and GET (req.query) for maximum compatibility
+  // Support both POST (req.body) and GET (req.query) for maximum flexibility
   const { symptom, lat, lng, history } = req.body.symptom
     ? req.body
     : req.query;
@@ -21,6 +21,7 @@ exports.getAdvice = async (req, res) => {
   const hospitalMap = `https://www.google.com/maps/search/hospital+near+me/@${userLat},${userLng},15z`;
 
   // 1. EMERGENCY TRIAGE (Safety Check - Highest Priority)
+  // Merged keywords from both versions for maximum safety
   const dangerKeywords = [
     "chest pain",
     "breathing",
@@ -37,36 +38,42 @@ exports.getAdvice = async (req, res) => {
       {
         severity: "emergency",
         advice_text:
-          "URGENT: Your symptoms indicate a high-risk situation. Please call 911 or your local emergency number immediately. Do not attempt to self-treat. Proceed to the nearest hospital now.",
+          "🚨 URGENT: Your symptoms indicate a high-risk medical emergency. Please CALL 911 or your local emergency number immediately. Do not attempt to self-treat. Proceed to the nearest hospital without delay.",
         hospital_link: hospitalMap,
       },
     ]);
   }
 
   try {
-    // 2. MULTI-MATCH DATABASE SEARCH (Prioritize your specific medical records)
+    // 2. MULTI-MATCH DATABASE SEARCH (Keyword Extraction from long strings)
+    // This looks for EVERY row in your database that matches ANY part of the user's sentence
     const [dbResults] = await db.execute("SELECT * FROM health_advice");
-    const matched = dbResults.filter((item) => {
-      const keys = item.keywords
+
+    const matchedResults = dbResults.filter((row) => {
+      const dbKeywords = row.keywords
         .toLowerCase()
         .split(",")
         .map((k) => k.trim());
-      return keys.some((k) => inputLower.includes(k) && k.length > 2);
+      // Match if any specific keyword in this DB row exists anywhere in the user's long string
+      return dbKeywords.some(
+        (keyword) => inputLower.includes(keyword) && keyword.length > 2,
+      );
     });
 
-    if (matched.length > 0) {
+    if (matchedResults.length > 0) {
+      // Return ALL found results from the curated database
       return res.json(
-        matched.map((item) => ({
+        matchedResults.map((item) => ({
           ...item,
           severity: "found",
-          advice_text: `Verified Guidance: ${item.advice_text} (Note: This is based on our curated medical database.)`,
+          advice_text: `Verified Guidance: ${item.advice_text} (Note: This is based on our medical database. Please consult a doctor if symptoms persist.)`,
           hospital_link: hospitalMap,
         })),
       );
     }
 
-    // 3. AI ENGINE FALLBACKS
-    const systemPrompt = `ROLE: Professional AI Health Assistant. Provide accurate, safe, helpful health info. NEVER diagnose. Suggest booking a doctor if symptoms persist. Be calm and professional.`;
+    // 3. AI ENGINE FALLBACKS (Only runs if Database match is 0)
+    const systemPrompt = `ROLE: Professional AI Health Assistant for HealthSync. Provide accurate, safe, helpful health info. NEVER diagnose. Suggest booking a doctor if symptoms persist. Be calm and professional.`;
     let botText = "";
 
     try {
@@ -76,7 +83,7 @@ exports.getAdvice = async (req, res) => {
         systemInstruction: systemPrompt,
       });
 
-      // Format history (Gemini requires first message to be from 'user')
+      // Format history correctly for Gemini API
       let cleanedHistory = (history || [])
         .map((item) => ({
           role:
@@ -86,8 +93,11 @@ exports.getAdvice = async (req, res) => {
             : [{ text: item.text || "" }],
         }))
         .filter((item) => item.parts[0].text.length > 0);
-      if (cleanedHistory.length > 0 && cleanedHistory[0].role === "model")
+
+      // Gemini requires first message to be from 'user'
+      if (cleanedHistory.length > 0 && cleanedHistory[0].role === "model") {
         cleanedHistory.shift();
+      }
 
       const chat = model.startChat({ history: cleanedHistory });
       const result = await chat.sendMessage(symptom);
@@ -109,14 +119,13 @@ exports.getAdvice = async (req, res) => {
           },
         );
 
-        // Extracting text from Hugging Face structure
         const fullText = hfResponse.data[0].generated_text;
         botText = fullText.split("[/INST]").pop().trim();
       } catch (hfErr) {
         console.error("Hugging Face also failed:", hfErr.message);
-        // --- Level C: Final Fallback ---
+        // --- Level C: Final Safe Fallback ---
         botText =
-          "I am experiencing a high volume of requests. Based on your symptoms, I strongly recommend booking a consultation with one of our verified specialists for a safe evaluation.";
+          "I couldn't find a specific match in our medical database. Based on your symptoms, I strongly recommend booking a consultation with one of our verified specialists for a professional evaluation.";
       }
     }
 
@@ -133,7 +142,7 @@ exports.getAdvice = async (req, res) => {
       {
         severity: "unknown",
         advice_text:
-          "I am experiencing a slight delay in processing. If you feel unwell, please book a consultation with one of our specialists using the buttons below.",
+          "I am experiencing a slight delay in processing. If you feel unwell, please book a consultation with one of our specialists or visit the nearest hospital using the buttons below.",
         hospital_link: hospitalMap,
       },
     ]);

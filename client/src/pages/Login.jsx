@@ -1,14 +1,12 @@
 import { useState } from "react";
 import api from "../services/api";
 import { useNavigate, Link } from "react-router-dom";
-// 1. Added Eye and EyeOff imports
 import { Eye, EyeOff } from "lucide-react";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  // 2. Added showPassword state
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
@@ -26,9 +24,7 @@ const Login = () => {
   };
 
   return (
-    /* This container ensures the card is perfectly centered */
     <div className="flex flex-col items-center justify-center min-h-[80vh] px-4 py-10">
-      {/* The Login Card */}
       <div className="w-full max-w-md bg-white p-8 rounded-3xl shadow-2xl border border-gray-100">
         <div className="text-center mb-8">
           <h2 className="text-3xl font-extrabold text-blue-600">
@@ -62,7 +58,6 @@ const Login = () => {
             <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider ml-1">
               Password
             </label>
-            {/* 3. Integrated Relative container with Eye toggle */}
             <div className="relative mt-1">
               <input
                 type={showPassword ? "text" : "password"}
@@ -80,14 +75,25 @@ const Login = () => {
                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
             </div>
+
+            {/* NEW: Forgot Password Link */}
+            <div className="flex justify-end mt-2">
+              <Link
+                to="/forgot-password"
+                className="text-xs font-bold text-blue-600 hover:underline tracking-tight"
+              >
+                Forgot Password?
+              </Link>
+            </div>
           </div>
+
           <button className="w-full bg-blue-600 text-white p-4 rounded-2xl font-bold text-lg shadow-lg shadow-blue-200 hover:bg-blue-700 active:scale-[0.98] transition-all">
             Login
           </button>
         </form>
 
         <div className="mt-8 text-center">
-          <p className="text-gray-600 text-sm">
+          <p className="text-gray-600 text-sm font-medium">
             Don't have an account?{" "}
             <Link
               to="/register"
