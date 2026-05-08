@@ -507,7 +507,11 @@ const AdminDashboard = () => {
                       </div>
                       <div className="flex gap-2">
                         <button
-                          onClick={() => handleEditPost}
+                          onClick={() =>
+                            handleEditPost("/create-post", {
+                              state: { editPost: post },
+                            })
+                          }
                           className="p-2.5 bg-white text-slate-400 hover:text-blue-600 rounded-xl border border-slate-100 shadow-sm"
                         >
                           <Edit size={18} />
