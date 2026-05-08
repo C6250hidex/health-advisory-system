@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const db = require("../config/db");
 const authorize = require("../middleware/authMiddleware");
+const sendEmail = require("../services/emailService"); // Added for notifications
 
 /**
  * ---------------------------------------------------------
@@ -30,7 +31,6 @@ router.get("/", async (req, res) => {
  */
 
 // Get posts for current user (Doctor seeing their own list)
-// NOTE: Placed before /:id to prevent route collision
 router.get("/my-posts", authorize(["admin", "doctor"]), async (req, res) => {
   try {
     const [rows] = await db.execute(
@@ -43,10 +43,11 @@ router.get("/my-posts", authorize(["admin", "doctor"]), async (req, res) => {
   }
 });
 
-// Create a new post
+// CREATE POST & NOTIFY ALL USERS
 router.post("/", authorize(["admin", "doctor"]), async (req, res) => {
   const { title, content, excerpt, category, read_time } = req.body;
   try {
+    // 1. Insert the post into the database
     await db.execute(
       "INSERT INTO posts (title, content, excerpt, category, author_id, read_time) VALUES (?, ?, ?, ?, ?, ?)",
       [
@@ -58,8 +59,26 @@ router.post("/", authorize(["admin", "doctor"]), async (req, res) => {
         read_time || "5 min",
       ],
     );
-    res.status(201).json({ message: "Health tip published successfully!" });
+
+    // 2. Fetch all verified users to notify them
+    const [users] = await db.execute(
+      "SELECT email, name FROM users WHERE is_verified = 1",
+    );
+
+    // 3. Loop through users and send emails
+    users.forEach((u) => {
+      sendEmail(
+        u.email,
+        "New Health Tip Published!",
+        `Hello ${u.name},\n\nA new medical article titled "${title}" has just been published by our experts. Log in to HealthSync to read the full tip!\n\nStay healthy!`,
+      );
+    });
+
+    res
+      .status(201)
+      .json({ message: "Health tip published and users notified!" });
   } catch (err) {
+    console.error("Post Creation Error:", err.message);
     res.status(500).json({ error: err.message });
   }
 });
@@ -68,7 +87,6 @@ router.post("/", authorize(["admin", "doctor"]), async (req, res) => {
 router.put("/:id", authorize(["admin", "doctor"]), async (req, res) => {
   const { title, content, category } = req.body;
   try {
-    // 1. Check if post exists and get author_id
     const [post] = await db.execute(
       "SELECT author_id FROM posts WHERE id = ?",
       [req.params.id],
@@ -78,16 +96,12 @@ router.put("/:id", authorize(["admin", "doctor"]), async (req, res) => {
       return res.status(404).json({ message: "Post not found" });
     }
 
-    // 2. Logic: Admin can edit anything, Doctor can only edit their OWN post
     if (req.user.role !== "admin" && post[0].author_id !== req.user.id) {
-      return res
-        .status(403)
-        .json({
-          message: "Unauthorized: You can only edit your own articles.",
-        });
+      return res.status(403).json({
+        message: "Unauthorized: You can only edit your own articles.",
+      });
     }
 
-    // 3. Perform update
     await db.execute(
       "UPDATE posts SET title = ?, content = ?, category = ? WHERE id = ?",
       [title, content, category, req.params.id],
@@ -102,7 +116,6 @@ router.put("/:id", authorize(["admin", "doctor"]), async (req, res) => {
 // Delete a post
 router.delete("/:id", authorize(["admin", "doctor"]), async (req, res) => {
   try {
-    // 1. Check if post exists
     const [post] = await db.execute(
       "SELECT author_id FROM posts WHERE id = ?",
       [req.params.id],
@@ -112,16 +125,12 @@ router.delete("/:id", authorize(["admin", "doctor"]), async (req, res) => {
       return res.status(404).json({ message: "Post not found" });
     }
 
-    // 2. Logic: Admin can delete anything, Doctor can only delete their OWN post
     if (req.user.role !== "admin" && post[0].author_id !== req.user.id) {
-      return res
-        .status(403)
-        .json({
-          message: "Unauthorized: You can only delete your own articles.",
-        });
+      return res.status(403).json({
+        message: "Unauthorized: You can only delete your own articles.",
+      });
     }
 
-    // 3. Perform deletion
     await db.execute("DELETE FROM posts WHERE id = ?", [req.params.id]);
     res.json({ message: "Post deleted successfully!" });
   } catch (err) {

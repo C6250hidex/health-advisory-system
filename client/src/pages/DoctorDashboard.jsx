@@ -22,7 +22,8 @@ import {
   Save,
   MapPin,
   Briefcase,
-  Trash2, // Added for the delete button
+  Trash2,
+  Edit,
 } from "lucide-react";
 import AppointmentChat from "../components/AppointmentChat";
 import Modal from "../components/Modal";
@@ -157,6 +158,10 @@ const DoctorDashboard = () => {
         toast.error("Failed to delete post");
       }
     }
+  };
+  const handleEditPost = (post) => {
+    // Navigate to create-post page but pass the post data as state
+    navigate("/create-post", { state: { editPost: post } });
   };
 
   const handleApproveClick = (app) => {
@@ -447,6 +452,12 @@ const DoctorDashboard = () => {
                       className="p-2.5 bg-white text-slate-400 hover:text-red-600 rounded-xl border border-slate-100 shadow-sm transition-colors"
                     >
                       <Trash2 size={18} />
+                    </button>
+                    <button
+                      onClick={() => handleEditPost(post.id)}
+                      className="p-2.5 bg-white text-slate-400 hover:text-green-600 rounded-xl border border-slate-100 shadow-sm"
+                    >
+                      <Edit size={18} />
                     </button>
                   </div>
                 </div>

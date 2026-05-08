@@ -2,21 +2,31 @@ import { useState } from "react";
 import api from "../services/api";
 import { PenTool, Send } from "lucide-react";
 import toast from "react-hot-toast";
+import { useLocation } from "react-router-dom";
 
 const CreatePost = () => {
-  const [post, setPost] = useState({
-    title: "",
-    content: "",
-    excerpt: "",
-    category: "Nutrition",
-    read_time: "5 min",
-  });
+  const location = useLocation();
+  const editData = location.state?.editPost;
+  const [post, setPost] = useState(
+    editData || {
+      title: "",
+      content: "",
+      excerpt: "",
+      category: "Nutrition",
+      read_time: "5 min",
+    },
+  );
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await api.post("/posts", post);
-      toast.success("Published successfully!");
+      if (editData) {
+        await api.put(`/posts/${editData.id}`, post);
+        toast.success("Post updated successfully!");
+      } else {
+        await api.post("/posts", post);
+        toast.success("Published successfully!");
+      }
       window.location.href = "/blog";
     } catch (err) {
       toast.error(err.response?.data?.message || "Error publishing");
