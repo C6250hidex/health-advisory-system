@@ -507,26 +507,16 @@ const AdminDashboard = () => {
                       </div>
                       <div className="flex gap-2">
                         <button
-                          onClick={() =>
-                            navigate("/create-post", {
-                              state: { editPost: post },
-                            })
-                          }
+                          onClick={() => handleEditPost}
                           className="p-2.5 bg-white text-slate-400 hover:text-blue-600 rounded-xl border border-slate-100 shadow-sm"
                         >
-                          <Settings size={18} />
+                          <Edit size={18} />
                         </button>
                         <button
                           onClick={() => handleDeletePost(post.id)}
                           className="p-2.5 bg-white text-slate-400 hover:text-red-600 rounded-xl border border-slate-100 shadow-sm"
                         >
                           <Trash2 size={18} />
-                        </button>
-                        <button
-                          onClick={() => handleEditPost(post.id)}
-                          className="p-2.5 bg-white text-slate-400 hover:text-green-600 rounded-xl border border-slate-100 shadow-sm"
-                        >
-                          <Edit size={18} />
                         </button>
                       </div>
                     </div>
