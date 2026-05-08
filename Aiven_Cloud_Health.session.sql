@@ -191,21 +191,16 @@ INSERT INTO health_advice (keywords, advice_text) VALUES
 ('hair loss', 'Hair loss may result from stress or nutritional deficiency. Advice: Maintain balanced nutrition and reduce harsh treatments.'),
 ('dry skin', 'Dry skin may worsen in harsh weather conditions. Advice: Use moisturizers regularly and drink enough water.'),
 ('heat stroke', 'Heat stroke is a medical emergency caused by overheating. Advice: Seek emergency medical care immediately.'),
-('panic attack', 'Panic attacks may cause rapid breathing and fear. Advice: Practice slow breathing and seek mental health support.'),('shortness of breath', 'Difficulty breathing may indicate a serious medical condition. Advice: Sit upright and seek urgent medical attention.'),
-
+('panic attack', 'Panic attacks may cause rapid breathing and fear. Advice: Practice slow breathing and seek mental health support.'),
+USE defaultdb;
+INSERT INTO health_advice (keywords, advice_text) VALUES ('shortness of breath', 'Difficulty breathing may indicate a serious medical condition. Advice: Sit upright and seek urgent medical attention.')
 ('back pain', 'Back pain may result from strain or poor posture. Advice: Avoid heavy lifting and apply warm compresses.'),
-
 ('chest congestion', 'Chest congestion may occur with respiratory infections. Advice: Drink warm fluids and rest adequately.'),
-
 ('wheezing', 'Wheezing may indicate airway narrowing. Advice: Avoid smoke exposure and seek medical care if symptoms worsen.'),
-
 ('loss of taste', 'Loss of taste may occur during infections. Advice: Stay hydrated and monitor additional symptoms.'),
-
 ('loss of smell', 'Loss of smell may result from infections or allergies. Advice: Seek medical advice if symptoms persist.'),
-
 ('swollen lymph nodes', 'Swollen lymph nodes may indicate infection. Advice: Rest adequately and monitor for fever.'),
-
-('mouth ulcers', 'Mouth ulcers may result from irritation or stress. Advice: Avoid spicy foods and maintain oral hygiene.'),
+('mouth ulcers', 'Mouth ulcers may result from irritation or stress. Advice: Avoid spicy foods and maintain oral hygiene.');
 
 ('gum bleeding', 'Bleeding gums may indicate poor oral health. Advice: Brush gently and schedule a dental evaluation.'),
 
@@ -1143,3 +1138,17 @@ MODIFY COLUMN is_verified BOOLEAN DEFAULT 0;
 
 -- 2. Ensure Email uniqueness (if not already)
 -- ALTER TABLE users ADD UNIQUE (email);
+
+USE defaultdb;
+
+-- 1. Change keywords to TEXT (allows much more data)
+ALTER TABLE health_advice MODIFY COLUMN keywords TEXT;
+
+-- 2. Change advice_text to LONGTEXT (just in case the advice is long)
+ALTER TABLE health_advice MODIFY COLUMN advice_text LONGTEXT;
+
+-- 3. Reset the ID counter so it doesn't get stuck
+ALTER TABLE health_advice AUTO_INCREMENT = 1;
+
+-- 4. Check if the table is currently locked
+COMMIT;
