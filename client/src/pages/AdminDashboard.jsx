@@ -123,10 +123,10 @@ const AdminDashboard = () => {
       }
     }
   };
-  const handleEditPost = (post) => {
-    // Navigate to create-post page but pass the post data as state
-    navigate("/create-post", { state: { editPost: post } });
-  };
+  // const handleEditPost = (post) => {
+  //   // Navigate to create-post page but pass the post data as state
+  //   navigate("/create-post", { state: { editPost: post } });
+  // };
 
   // --- MODAL TRIGGER FUNCTIONS ---
 
@@ -508,7 +508,7 @@ const AdminDashboard = () => {
                       <div className="flex gap-2">
                         <button
                           onClick={() =>
-                            handleEditPost("/create-post", {
+                            navigate("/create-post", {
                               state: { editPost: post },
                             })
                           }
