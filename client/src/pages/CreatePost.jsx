@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import api from "../services/api";
-import { PenTool, Send, Layout, ArrowLeft } from "lucide-react";
+import { PenTool, Send, Layout, ArrowLeft, Clock } from "lucide-react";
 import toast from "react-hot-toast";
 
 const CreatePost = () => {
