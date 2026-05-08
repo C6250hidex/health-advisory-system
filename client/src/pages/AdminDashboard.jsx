@@ -120,6 +120,10 @@ const AdminDashboard = () => {
       }
     }
   };
+  const handleEditPost = (post) => {
+    // Navigate to create-post page but pass the post data as state
+    navigate("/create-post", { state: { editPost: post } });
+  };
 
   // --- MODAL TRIGGER FUNCTIONS ---
 
@@ -512,6 +516,12 @@ const AdminDashboard = () => {
                         <button
                           onClick={() => handleDeletePost(post.id)}
                           className="p-2.5 bg-white text-slate-400 hover:text-red-600 rounded-xl border border-slate-100 shadow-sm"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                        <button
+                          onClick={() => handleEditPost(post.id)}
+                          className="p-2.5 bg-white text-slate-400 hover:text-green-600 rounded-xl border border-slate-100 shadow-sm"
                         >
                           <Trash2 size={18} />
                         </button>

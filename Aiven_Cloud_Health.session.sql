@@ -107,3 +107,16 @@ INSERT INTO health_advice (keywords, advice_text) VALUES
 ('depression, sadness, low energy, mood', 'Mental health is vital. Advice: Reach out to a trusted friend or professional counselor.'),
 ('toothache, gum pain, swelling', 'Dental pain is deep-seated. Advice: Rinse with warm salt water. See a dentist immediately.'),
 ('pregnancy, nausea, morning sickness', 'Prenatal care is key. Advice: Take folic acid and register for antenatal care.');
+
+
+USE defaultdb;
+
+-- 1. Update Users Table for Verification and Password Reset
+ALTER TABLE users 
+ADD COLUMN verification_token VARCHAR(255),
+ADD COLUMN reset_token VARCHAR(255),
+ADD COLUMN reset_expires DATETIME,
+MODIFY COLUMN is_verified BOOLEAN DEFAULT 0;
+
+-- 2. Ensure Email uniqueness (if not already)
+-- ALTER TABLE users ADD UNIQUE (email);

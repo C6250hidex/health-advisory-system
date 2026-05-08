@@ -1,22 +1,24 @@
 import { useState } from "react";
 import api from "../services/api";
 import { useNavigate, Link } from "react-router-dom";
-import { ShieldCheck, ChevronDown } from "lucide-react";
+// Added Eye and EyeOff icons
+import { ShieldCheck, ChevronDown, Eye, EyeOff } from "lucide-react";
 import toast from "react-hot-toast";
 
 const Register = () => {
-  // 1. Updated initial state to include specialization
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     password: "",
     role: "user",
     license: "",
-    specialization: "General Physician", // Default value for doctors
+    specialization: "General Physician",
   });
 
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  // 1. Added showPassword state
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
   const handleRegister = async (e) => {
@@ -109,7 +111,7 @@ const Register = () => {
             />
           </div>
 
-          {/* 2. Conditional fields for Doctors: License & Specialization */}
+          {/* Conditional fields for Doctors */}
           {formData.role === "doctor" && (
             <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-500">
               <div className="relative">
@@ -164,16 +166,25 @@ const Register = () => {
             </div>
           )}
 
-          <div>
+          {/* 2. Password Field with Visibility Toggle */}
+          <div className="relative">
             <input
-              type="password"
+              type={showPassword ? "text" : "password"}
               placeholder="Create Password"
               className="w-full p-4 bg-gray-50 rounded-2xl outline-none border border-transparent focus:border-blue-200 focus:bg-white transition-all font-medium"
+              value={formData.password}
               onChange={(e) =>
                 setFormData({ ...formData, password: e.target.value })
               }
               required
             />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-600 transition-colors"
+            >
+              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+            </button>
           </div>
 
           <button
