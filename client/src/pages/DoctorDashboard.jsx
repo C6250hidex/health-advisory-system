@@ -444,8 +444,12 @@ const DoctorDashboard = () => {
                   </div>
                   <div className="flex gap-2">
                     <button
-                      onClick={() => toast("Editing feature coming soon")}
-                      className="p-2.5 bg-white text-slate-400 hover:text-blue-600 rounded-xl border border-slate-100 shadow-sm transition-colors"
+                      onClick={() =>
+                        navigate("/create-post", {
+                          state: { editPost: post },
+                        })
+                      }
+                      className="p-2.5 bg-white text-slate-400 hover:text-blue-600 rounded-xl border border-slate-100 shadow-sm"
                     >
                       <Settings size={18} />
                     </button>

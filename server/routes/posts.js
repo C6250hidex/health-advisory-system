@@ -86,25 +86,26 @@ router.post("/", authorize(["admin", "doctor"]), async (req, res) => {
 // Update an existing post
 router.put("/:id", authorize(["admin", "doctor"]), async (req, res) => {
   const { title, content, category } = req.body;
+  const { id } = req.params; // Make sure this is capturing the ID from the URL
+
   try {
+    // 1. Check if post exists
     const [post] = await db.execute(
       "SELECT author_id FROM posts WHERE id = ?",
-      [req.params.id],
+      [id],
     );
-
-    if (post.length === 0) {
+    if (post.length === 0)
       return res.status(404).json({ message: "Post not found" });
-    }
 
+    // 2. Permission check
     if (req.user.role !== "admin" && post[0].author_id !== req.user.id) {
-      return res.status(403).json({
-        message: "Unauthorized: You can only edit your own articles.",
-      });
+      return res.status(403).json({ message: "Unauthorized" });
     }
 
+    // 3. Update
     await db.execute(
       "UPDATE posts SET title = ?, content = ?, category = ? WHERE id = ?",
-      [title, content, category, req.params.id],
+      [title, content, category, id],
     );
 
     res.json({ message: "Post updated successfully!" });
