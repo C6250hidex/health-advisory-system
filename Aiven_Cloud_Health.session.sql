@@ -109,7 +109,6 @@ INSERT INTO health_advice (keywords, advice_text) VALUES
 ('pregnancy, nausea, morning sickness', 'Prenatal care is key. Advice: Take folic acid and register for antenatal care.');
 
 
-USE defaultdb;
 
 -- 1. Update Users Table for Verification and Password Reset
 ALTER TABLE users 

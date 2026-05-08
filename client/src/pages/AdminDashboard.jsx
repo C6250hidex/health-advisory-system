@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import api from "../services/api";
 import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
   Users,
   Stethoscope,
@@ -23,6 +24,7 @@ import Modal from "../components/Modal";
 import toast from "react-hot-toast";
 
 const AdminDashboard = () => {
+  const navigate = useNavigate();
   const [stats, setStats] = useState({
     appointments: [],
     doctors: [],

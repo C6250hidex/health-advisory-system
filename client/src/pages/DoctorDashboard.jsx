@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import api from "../services/api";
 import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
   Calendar,
   Clock,
@@ -46,6 +47,7 @@ const getRealTimeLocation = () => {
 };
 
 const DoctorDashboard = () => {
+  const navigate = useNavigate();
   const [apps, setApps] = useState([]);
   const [myPosts, setMyPosts] = useState([]); // State for blog management
   const [loading, setLoading] = useState(false);

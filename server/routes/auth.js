@@ -1,24 +1,51 @@
 const express = require("express");
 const router = express.Router();
-const { register, login } = require("../controllers/authController");
+const authController = require("../controllers/authController");
 const authorize = require("../middleware/authMiddleware");
 const db = require("../config/db");
+const bcrypt = require("bcryptjs");
 
 /**
  * ---------------------------------------------------------
- * 1. PUBLIC ROUTES (No Token Needed)
+ * 1. PUBLIC AUTH ROUTES
  * ---------------------------------------------------------
  */
-router.post("/register", register);
-router.post("/login", login);
+router.post("/register", authController.register);
+router.post("/login", authController.login);
+router.get("/verify-email/:token", authController.verifyEmail);
+router.post("/forgot-password", authController.forgotPassword);
+
+// Password Reset Logic (Handles the actual password change)
+router.post("/reset-password/:token", async (req, res) => {
+  const { token } = req.params;
+  const { password } = req.body;
+  try {
+    const hashedPassword = await bcrypt.hash(password, 10);
+    // Update password only if token matches and hasn't expired
+    const [result] = await db.execute(
+      "UPDATE users SET password = ?, reset_token = NULL, reset_expires = NULL WHERE reset_token = ? AND reset_expires > NOW()",
+      [hashedPassword, token],
+    );
+
+    if (result.affectedRows === 0) {
+      return res
+        .status(400)
+        .json({ message: "Invalid or expired reset link." });
+    }
+
+    res.json({ message: "Password updated successfully! You can now log in." });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 /**
  * ---------------------------------------------------------
- * 2. USER PROFILE ROUTES (Any Logged-in User)
+ * 2. USER PROFILE ROUTES (Self Management)
  * ---------------------------------------------------------
  */
 
-// Get Personal Profile Data
+// Get Personal Profile (Merges User + Doctor data if applicable)
 router.get("/profile", authorize(), async (req, res) => {
   try {
     const [rows] = await db.execute(
@@ -29,11 +56,12 @@ router.get("/profile", authorize(), async (req, res) => {
     if (rows.length === 0)
       return res.status(404).json({ message: "User not found" });
 
-    // If doctor, fetch their bio and clinic address too
     let userData = rows[0];
+
+    // If the user is a doctor, join their bio and clinic info
     if (userData.role === "doctor") {
       const [docRows] = await db.execute(
-        "SELECT bio, clinic_address FROM doctors WHERE user_id = ?",
+        "SELECT bio, clinic_address, experience_years FROM doctors WHERE user_id = ?",
         [req.user.id],
       );
       if (docRows.length > 0) {
@@ -47,7 +75,7 @@ router.get("/profile", authorize(), async (req, res) => {
   }
 });
 
-// Update Personal/Professional Profile Data (Enhanced Version)
+// Update Profile (Handles GPS, Phone, Bio, and Experience)
 router.put("/profile", authorize(), async (req, res) => {
   const {
     phone,
@@ -60,7 +88,7 @@ router.put("/profile", authorize(), async (req, res) => {
     experience_years,
   } = req.body;
   try {
-    // 1. Update the primary Users table (Basic info + GPS)
+    // 1. Update the primary Users table
     await db.execute(
       `UPDATE users SET phone = ?, dob = ?, gender = ?, 
        latitude = ?, longitude = ? WHERE id = ?`,
@@ -74,13 +102,12 @@ router.put("/profile", authorize(), async (req, res) => {
       ],
     );
 
-    // 2. If the user is a doctor, we also update the professional details in the doctors table
+    // 2. If the user is a doctor, update the professional details in the doctors table
     if (req.user.role === "doctor") {
       await db.execute(
-        "UPDATE doctors SET bio = ?,phone = ?, clinic_address = ?, experience_years = ? WHERE user_id = ?",
+        "UPDATE doctors SET bio = ?, clinic_address = ?, experience_years = ? WHERE user_id = ?",
         [
           bio || null,
-          phone || null,
           clinic_address || null,
           experience_years || null,
           req.user.id,
@@ -88,7 +115,7 @@ router.put("/profile", authorize(), async (req, res) => {
       );
     }
 
-    res.json({ message: "Profile updated successfully!" });
+    res.json({ message: "Medical profile updated successfully!" });
   } catch (err) {
     console.error("Profile Update Error:", err.message);
     res.status(500).json({ error: err.message });
@@ -97,11 +124,11 @@ router.put("/profile", authorize(), async (req, res) => {
 
 /**
  * ---------------------------------------------------------
- * 3. ADMIN ONLY ROUTES (Full Control)
+ * 3. ADMIN MANAGEMENT ROUTES
  * ---------------------------------------------------------
  */
 
-// Get All Users (Patients & Doctors)
+// View all users
 router.get("/users", authorize(["admin"]), async (req, res) => {
   try {
     const [rows] = await db.execute(
@@ -113,13 +140,13 @@ router.get("/users", authorize(["admin"]), async (req, res) => {
   }
 });
 
-// Verify a Doctor
+// Verify Doctor + Log action
 router.put("/verify-doctor/:id", authorize(["admin"]), async (req, res) => {
   const { id } = req.params;
   try {
     await db.execute("UPDATE users SET is_verified = 1 WHERE id = ?", [id]);
 
-    // Log the verification
+    // Auto-log the action
     await db.execute(
       "INSERT INTO audit_logs (action_type, performed_by, details) VALUES (?, ?, ?)",
       ["DOCTOR_VERIFIED", req.user.id, `Admin verified doctor user ID: ${id}`],
@@ -131,45 +158,39 @@ router.put("/verify-doctor/:id", authorize(["admin"]), async (req, res) => {
   }
 });
 
-// Delete a Specific User
+// Delete User
 router.delete("/users/:id", authorize(["admin"]), async (req, res) => {
-  const { id } = req.params;
   try {
-    await db.execute("DELETE FROM users WHERE id = ?", [id]);
-    res.json({ message: "User deleted successfully!" });
+    await db.execute("DELETE FROM users WHERE id = ?", [req.params.id]);
+    res.json({ message: "User removed from system." });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// Get System Audit Logs
+// System Logs
 router.get("/logs", authorize(["admin"]), async (req, res) => {
   try {
-    const [manualLogs] = await db.execute(`
-              SELECT l.*, u.name as admin_name 
-              FROM audit_logs l 
-              LEFT JOIN users u ON l.performed_by = u.id 
-              ORDER BY l.created_at DESC LIMIT 50`);
-
-    res.json(manualLogs);
+    const [rows] = await db.execute(`
+        SELECT l.*, u.name as admin_name 
+        FROM audit_logs l 
+        LEFT JOIN users u ON l.performed_by = u.id 
+        ORDER BY l.created_at DESC LIMIT 50`);
+    res.json(rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// Clear All System Data (Except Admin)
+// System Purge
 router.delete("/purge-all", authorize(["admin"]), async (req, res) => {
   try {
     await db.execute("DELETE FROM users WHERE role != 'admin'");
-
     await db.execute(
       "INSERT INTO audit_logs (action_type, performed_by, details) VALUES (?, ?, ?)",
       ["SYSTEM_PURGE", req.user.id, "Admin performed a complete system reset"],
     );
-
-    res.json({
-      message: "System purged successfully. All users and data cleared.",
-    });
+    res.json({ message: "System purged successfully." });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

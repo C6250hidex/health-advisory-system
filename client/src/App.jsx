@@ -23,6 +23,9 @@ import CreatePost from "./pages/CreatePost";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import Chatbot from "./components/Chatbot";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
+import VerifyEmail from "./pages/VerifyEmail";
 
 // DashboardGate: Decides which dashboard to show based on User Role and Verification Status
 const DashboardGate = () => {
@@ -92,6 +95,9 @@ function App() {
             <Route path="/create-post" element={<CreatePost />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/terms" element={<Terms />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password/:token" element={<ResetPassword />} />
+            <Route path="/verify-email/:token" element={<VerifyEmail />} />
             {/* This single route handles all 3 dashboard types and verification checks */}
             <Route path="/dashboard" element={<DashboardGate />} />
 
