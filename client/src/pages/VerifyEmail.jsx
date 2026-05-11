@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import api from "../services/api";
-import { CheckCircle2, XCircle, Loader2 } from "lucide-react";
+import { CheckCircle, XCircle, Loader2 } from "lucide-react";
 
 const VerifyEmail = () => {
   const { token } = useParams();
@@ -20,50 +20,51 @@ const VerifyEmail = () => {
   }, [token]);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[80vh] text-center p-6">
+    <div className="flex flex-col items-center justify-center min-h-[70vh] text-center p-6">
       {status === "loading" && (
-        <div className="space-y-4">
-          <Loader2 size={60} className="animate-spin text-blue-600 mx-auto" />
-          <h2 className="text-2xl font-bold text-slate-700">
-            Verifying your account...
+        <div className="animate-pulse">
+          <Loader2
+            size={60}
+            className="animate-spin text-blue-600 mx-auto mb-4"
+          />
+          <h2 className="text-xl font-bold text-slate-600">
+            Verifying your email...
           </h2>
         </div>
       )}
 
       {status === "success" && (
-        <div className="bg-white p-12 rounded-[50px] shadow-2xl border border-emerald-100 animate-in zoom-in duration-500">
-          <CheckCircle2 size={80} className="text-emerald-500 mx-auto mb-6" />
-          <h2 className="text-3xl font-black text-slate-900 mb-4">
-            Account Activated!
+        <div className="bg-white p-10 rounded-[40px] shadow-2xl border border-emerald-100 max-w-sm">
+          <CheckCircle size={80} className="text-emerald-500 mx-auto mb-6" />
+          <h2 className="text-2xl font-black text-slate-900">
+            Email Verified!
           </h2>
-          <p className="text-slate-500 mb-10 max-w-xs mx-auto">
-            Your email has been successfully verified. You can now access all
-            HealthSync features.
+          <p className="text-slate-500 mt-4 mb-8">
+            Your account is now active. You can log in to book appointments.
           </p>
           <Link
             to="/login"
-            className="bg-blue-600 text-white px-10 py-4 rounded-2xl font-black shadow-lg"
+            className="bg-blue-600 text-white px-8 py-3 rounded-2xl font-bold"
           >
-            Login to Dashboard
+            Go to Login
           </Link>
         </div>
       )}
 
       {status === "error" && (
-        <div className="bg-white p-12 rounded-[50px] shadow-2xl border border-red-100">
+        <div className="bg-white p-10 rounded-[40px] shadow-2xl border border-red-100 max-w-sm">
           <XCircle size={80} className="text-red-500 mx-auto mb-6" />
-          <h2 className="text-3xl font-black text-slate-900 mb-4">
-            Verification Failed
-          </h2>
-          <p className="text-slate-500 mb-10 max-w-xs mx-auto">
-            The link is invalid or has already been used.
+          <h2 className="text-2xl font-black text-slate-900">Link Invalid</h2>
+          <p className="text-slate-500 mt-4 mb-8">
+            The link may have expired or was already used.
           </p>
           <Link to="/register" className="text-blue-600 font-bold underline">
-            Try registering again
+            Try Registering Again
           </Link>
         </div>
       )}
     </div>
   );
 };
+
 export default VerifyEmail;

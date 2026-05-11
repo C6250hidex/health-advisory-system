@@ -1,33 +1,33 @@
 const nodemailer = require("nodemailer");
-require("dotenv").config();
 
-// Initialize Nodemailer with your email configuration
 const transporter = nodemailer.createTransport({
-  service: "gmail",
+  host: "smtp.gmail.com",
+  port: 465,
+  secure: true,
   auth: {
     user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
+    password: process.env.EMAIL_PASS, // Your 16-digit Google App Password
   },
+  family: 4, // FORCES IPv4 to prevent Render timeouts
+  connectionTimeout: 15000,
+  greetingTimeout: 15000,
 });
 
 const sendEmail = async (to, subject, text) => {
-  try {
-    const mailoptions = {
-      from: `HealthSync <${process.env.EMAIL_USER}>`,
-      to: [to],
-      subject: subject,
-      text: text,
-    };
-    const info = await transporter.sendMail(mailoptions);
+  const mailOptions = {
+    from: `"HealthSync System" <${process.env.EMAIL_USER}>`,
+    to,
+    subject,
+    text,
+  };
 
-    console.log("EMAIL SUCCESS:", info.messageId);
-    return {
-      success: true,
-      id: info.messageId,
-    };
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log("Verification email sent to: " + to);
+    return true;
   } catch (error) {
-    console.error("EMAIL ERROR:", error.message);
-    return { success: false, error: error.message };
+    console.error("NODEMAILER ERROR:", error.message);
+    return false;
   }
 };
 
