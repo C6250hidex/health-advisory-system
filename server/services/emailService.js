@@ -1,40 +1,40 @@
-const nodemailer = require("nodemailer");
+const axios = require("axios");
+require("dotenv").config();
 
-// 1. Create a "Cloud-Optimized" transporter
-const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 587,
-  secure: false, // Must be false for port 587
-  auth: {
-    user: process.env.EMAIL_USER,
-    password: process.env.EMAIL_PASS, // Your 16-digit Google App Password
-  },
-  // THE CRITICAL FIXES FOR RENDER:
-  family: 4, // FORCES IPv4 (Fixes ENETUNREACH)
-  connectionTimeout: 20000, // Wait 20 seconds for slow cloud handshakes
-  greetingTimeout: 20000,
-  socketTimeout: 20000,
-  tls: {
-    rejectUnauthorized: false, // Helps bypass Render's internal proxy issues
-    minVersion: "TLSv1.2",
-  },
-});
-
+/**
+ * Professional Email Service using Brevo API
+ * Bypasses SMTP port blocking on Cloud Hosting (Render/Vercel)
+ */
 const sendEmail = async (to, subject, text) => {
-  const mailOptions = {
-    from: `"HealthSync System" <${process.env.EMAIL_USER}>`,
-    to,
-    subject,
-    text,
-  };
+  const apiKey = process.env.BREVO_API_KEY;
+  const senderEmail = process.env.EMAIL_USER;
 
   try {
-    const info = await transporter.sendMail(mailOptions);
-    console.log("SUCCESS: Email sent to:", to);
-    return { success: true, messageId: info.messageId };
+    const response = await axios.post(
+      "https://api.brevo.com/v3/smtp/email",
+      {
+        sender: { name: "HealthSync Support", email: senderEmail },
+        to: [{ email: to }],
+        subject: subject,
+        textContent: text, // You can also use htmlContent for a better look
+      },
+      {
+        headers: {
+          "api-key": apiKey,
+          "Content-Type": "application/json",
+          accept: "application/json",
+        },
+      },
+    );
+
+    console.log(
+      "API SUCCESS: Email sent via Brevo. ID:",
+      response.data.messageId,
+    );
+    return { success: true };
   } catch (error) {
-    // This will print the EXACT reason in Render logs
-    console.error("NODEMAILER ERROR:", error.message);
+    // Detailed error reporting
+    console.error("BREVO API ERROR:", error.response?.data || error.message);
     return { success: false, error: error.message };
   }
 };
