@@ -79,7 +79,7 @@ exports.getAdvice = async (req, res) => {
     try {
       // --- Level A: Attempt Google Gemini Flash ---
       const model = genAI.getGenerativeModel({
-        model: "gemini-1.5-flash",
+        model: "gemini-pro-flash-001",
         systemInstruction: systemPrompt,
       });
 
